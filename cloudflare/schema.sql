@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS pengeluaran (
   tanggal TEXT NOT NULL,
   kategori TEXT NOT NULL,
   nominal INTEGER NOT NULL,
-  catatan TEXT DEFAULT ''
+  catatan TEXT DEFAULT '',
+  tipe TEXT NOT NULL DEFAULT 'keluar'
 );
 
 CREATE TABLE IF NOT EXISTS state (

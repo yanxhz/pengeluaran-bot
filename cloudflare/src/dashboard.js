@@ -1,9 +1,9 @@
-// Dashboard web multiuser untuk bot catatan pengeluaran.
-// Login via deep-link kode (domain-independent).
-// Gaya: dark navy + aksen ungu + hero gradien (referensi user).
+// Dashboard personal expense tracker (dark fintech) — multiuser login via deep-link kode.
+// Baca D1 `pengeluaran` (tipe: masuk/keluar) + `budget`. Semua angka dari data nyata.
 
 const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
   (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,9 +22,21 @@ function fmtBulan(str) {
   const [y, m] = str.split('-').map(Number);
   return `${BULAN[m - 1]} ${y}`;
 }
-function fmtTgl(str) {
-  const [y, m, d] = str.split('-').map(Number);
-  return `${d} ${BULAN[m - 1]} ${y}`;
+function daysInMonth(str) {
+  const [y, m] = str.split('-').map(Number);
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+function greetingWIB() {
+  const h = wibNow().getUTCHours();
+  if (h < 11) return 'Selamat Pagi';
+  if (h < 15) return 'Selamat Siang';
+  if (h < 18) return 'Selamat Sore';
+  return 'Selamat Malam';
+}
+function todayLabelWIB() {
+  const d = wibNow();
+  const dt = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  return `${HARI[dt.getUTCDay()]}, ${dt.getUTCDate()} ${BULAN[dt.getUTCMonth()]} ${dt.getUTCFullYear()}`;
 }
 
 /* ---------- kriptografi (Web Crypto) ---------- */
@@ -46,7 +58,6 @@ async function secretKey(env) {
   return _secret;
 }
 
-/* ---------- cookie sesi per-user ---------- */
 function getCookie(req, name) {
   const c = req.headers.get('cookie') || '';
   const m = c.split(';').map((s) => s.trim()).find((s) => s.startsWith(name + '='));
@@ -62,10 +73,8 @@ async function verifyUser(cookie, keyBytes) {
   const parts = cookie.split('.');
   if (parts.length !== 3) return null;
   const [userId, aud, h] = parts;
-  const now = Math.floor(Date.now() / 1000);
-  if (Number(aud) < now) return null;
-  const expect = await hmacHex(keyBytes, `${userId}.${aud}`);
-  if (expect !== h) return null;
+  if (Number(aud) < Math.floor(Date.now() / 1000)) return null;
+  if ((await hmacHex(keyBytes, `${userId}.${aud}`)) !== h) return null;
   const id = parseInt(userId, 10);
   return Number.isInteger(id) ? id : null;
 }
@@ -94,9 +103,7 @@ async function saveCode(env, code) {
 }
 async function takeCode(env, code) {
   await ensureLoginTable(env);
-  const row = await env.DB.prepare(
-    'SELECT chat_id, created FROM login_req WHERE code = ?'
-  ).bind(code).first();
+  const row = await env.DB.prepare('SELECT chat_id, created FROM login_req WHERE code = ?').bind(code).first();
   if (!row || !row.chat_id) return null;
   if (Date.now() - Number(row.created) > 10 * 60 * 1000) return null;
   return Number(row.chat_id);
@@ -109,18 +116,18 @@ function loginPage(code, botUsername) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Masuk — Catatan Pengeluaran</title>
 <style>
- :root{--bg:#091428;--card:#141c35;--line:rgba(191,143,245,.16);--tx:#e6eaf3;--mut:#8f919f;--purp:#bf8ff5}
- body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:radial-gradient(1200px 500px at 70% -10%, rgba(191,143,245,.18), transparent 60%), var(--bg);
+ :root{--bg:#0C0B12;--card:#181622;--line:rgba(160,32,240,.18);--tx:#F5F3FA;--mut:#9B96AA;--p:#A020F0}
+ body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:radial-gradient(1100px 480px at 70% -10%, rgba(160,32,240,.20), transparent 60%), var(--bg);
  color:var(--tx);display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
  .card{background:var(--card);border:1px solid var(--line);padding:40px;border-radius:22px;width:380px;
- box-shadow:0 20px 60px rgba(0,0,0,.45);text-align:center}
- h1{font-size:21px;margin:0 0 6px;color:#cea2f7}
+ box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center}
+ h1{font-size:21px;margin:0 0 6px}
  p{color:var(--mut);font-size:13.5px;margin:0 0 26px;line-height:1.6}
- .big{display:inline-block;background:linear-gradient(135deg,#c08ff5,#9a6ff0);color:#0a0a1a;font-weight:800;
- padding:14px 26px;border-radius:14px;text-decoration:none;font-size:15px;box-shadow:0 10px 30px rgba(191,143,245,.35)}
+ .big{display:inline-block;background:linear-gradient(135deg,#A020F0,#7B2FF7);color:#fff;font-weight:800;
+ padding:14px 26px;border-radius:14px;text-decoration:none;font-size:15px;box-shadow:0 10px 30px rgba(160,32,240,.35)}
  .big:hover{filter:brightness(1.08)}
  .status{margin-top:18px;color:var(--mut);font-size:13px}
- .ok{color:#22c55e;font-weight:700}
+ .ok{color:#22C55E;font-weight:700}
 </style></head><body>
 <div class="card"><h1>🔒 Catatan Pengeluaran</h1>
 <p>Klik tombol di bawah, buka di Telegram, lalu tekan <b>Start</b>. Setelah itu kembali ke halaman ini.</p>
@@ -131,25 +138,21 @@ function loginPage(code, botUsername) {
 const CODE = ${JSON.stringify(code)};
 (function poll(){
   fetch('/api/login/check?code='+CODE, {credentials:'same-origin'})
-    .then(function(r){return r.json();})
-    .then(function(j){
-      if(j.ok){ document.getElementById('st').innerHTML='<span class="ok">✓ Berhasil. Mengarahkan…</span>'; setTimeout(function(){location.href='/dashboard';},600); }
-      else { setTimeout(poll,2000); }
-    })
-    .catch(function(){ setTimeout(poll,3000); });
+    .then(r=>r.json()).then(j=>{
+      if(j.ok){ document.getElementById('st').innerHTML='<span class="ok">✓ Berhasil. Mengarahkan…</span>'; setTimeout(()=>location.href='/dashboard',600); }
+      else setTimeout(poll,2000);
+    }).catch(()=>setTimeout(poll,3000));
 })();
 </script>
 </body></html>`;
   return new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
-/* ---------- route ---------- */
+/* ---------- route utama ---------- */
 export async function handleDashboard(request, env) {
   const url = new URL(request.url);
   const keyBytes = await secretKey(env);
-  if (!keyBytes) {
-    return new Response('TELEGRAM_TOKEN belum diset di secret Worker.', { status: 500 });
-  }
+  if (!keyBytes) return new Response('TELEGRAM_TOKEN belum diset.', { status: 500 });
   const uid = await verifyUser(getCookie(request, 'dash_user'), keyBytes);
   if (!uid) {
     const code = genCode();
@@ -162,28 +165,41 @@ export async function handleDashboard(request, env) {
     return loginPage(code, un);
   }
   const bulan = /^\d{4}-\d{2}$/.test(url.searchParams.get('bulan') || '')
-    ? url.searchParams.get('bulan')
-    : bulanWIB();
-  const data = await getMonthData(env, uid, bulan);
-  return html(url, bulan, uid, data);
+    ? url.searchParams.get('bulan') : bulanWIB();
+  const d = await getMonthData(env, uid, bulan);
+  return html(url, bulan, uid, d);
 }
 
 export async function handleCheckLogin(request, env) {
   const url = new URL(request.url);
   const keyBytes = await secretKey(env);
   if (!keyBytes) return new Response('{}', { status: 500, headers: { 'content-type': 'application/json' } });
-  const code = url.searchParams.get('code') || '';
-  const chatId = await takeCode(env, code);
-  if (!chatId) {
-    return new Response('{"ok":false}', { headers: { 'content-type': 'application/json' } });
-  }
+  const chatId = await takeCode(env, url.searchParams.get('code') || '');
+  if (!chatId) return new Response('{"ok":false}', { headers: { 'content-type': 'application/json' } });
   const cookie = await signUser(chatId, keyBytes);
   return new Response('{"ok":true}', {
-    headers: {
-      'content-type': 'application/json',
-      'Set-Cookie': `dash_user=${cookie}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax`,
-    },
+    headers: { 'content-type': 'application/json', 'Set-Cookie': `dash_user=${cookie}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax` },
   });
+}
+
+export async function handleAdd(request, env) {
+  const keyBytes = await secretKey(env);
+  if (!keyBytes) return new Response('{}', { status: 500, headers: { 'content-type': 'application/json' } });
+  const chatId = await verifyUser(getCookie(request, 'dash_user'), keyBytes);
+  if (!chatId) return new Response('{"ok":false,"err":"auth"}', { status: 401, headers: { 'content-type': 'application/json' } });
+  let b = {};
+  try { b = await request.json(); } catch { return new Response('{"ok":false,"err":"bad"}', { status: 400, headers: { 'content-type': 'application/json' } }); }
+  const nominal = parseInt(String(b.nominal || '').replace(/[^\d]/g, ''), 10);
+  const tipe = b.tipe === 'masuk' ? 'masuk' : 'keluar';
+  const kategori = String(b.kategori || '').trim().toLowerCase().slice(0, 40);
+  if (!Number.isInteger(nominal) || nominal <= 0 || !kategori) {
+    return new Response('{"ok":false,"err":"invalid"}', { status: 400, headers: { 'content-type': 'application/json' } });
+  }
+  const tanggal = wibNow().toISOString().slice(0, 10);
+  const catatan = String(b.catatan || '').trim().slice(0, 120);
+  await env.DB.prepare('INSERT INTO pengeluaran (chat_id, tanggal, kategori, nominal, catatan, tipe) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(chatId, tanggal, kategori, nominal, catatan, tipe).run();
+  return new Response('{"ok":true}', { headers: { 'content-type': 'application/json' } });
 }
 
 export async function handleLogout() {
@@ -193,213 +209,396 @@ export async function handleLogout() {
   });
 }
 
+/* ---------- data (semua nyata) ---------- */
 async function getMonthData(env, chatId, bulan) {
-  const [tot, budget, perDay, perCat, recent] = await Promise.all([
+  const [bal, mExp, mInc, budget, dayExp, dayInc, catL, recent, prev, maxTx] = await Promise.all([
     env.DB.prepare(
-      'SELECT COALESCE(SUM(nominal),0) AS total, COUNT(*) AS n FROM pengeluaran WHERE chat_id = ? AND substr(tanggal,1,7) = ?')
+      "SELECT COALESCE(SUM(CASE WHEN tipe='masuk' THEN nominal ELSE 0 END),0) AS inc, COALESCE(SUM(CASE WHEN tipe='keluar' THEN nominal ELSE 0 END),0) AS exp FROM pengeluaran WHERE chat_id = ?")
+      .bind(chatId).first(),
+    env.DB.prepare("SELECT COALESCE(SUM(nominal),0) AS total, COUNT(*) AS n FROM pengeluaran WHERE chat_id=? AND tipe='keluar' AND substr(tanggal,1,7)=?")
       .bind(chatId, bulan).first(),
-    env.DB.prepare('SELECT nominal FROM budget WHERE chat_id = ? AND bulan = ?')
+    env.DB.prepare("SELECT COALESCE(SUM(nominal),0) AS total FROM pengeluaran WHERE chat_id=? AND tipe='masuk' AND substr(tanggal,1,7)=?")
       .bind(chatId, bulan).first(),
-    env.DB.prepare(
-      'SELECT tanggal, SUM(nominal) AS total FROM pengeluaran WHERE chat_id = ? AND substr(tanggal,1,7) = ? GROUP BY tanggal ORDER BY tanggal')
+    env.DB.prepare('SELECT nominal FROM budget WHERE chat_id=? AND bulan=?').bind(chatId, bulan).first(),
+    env.DB.prepare("SELECT tanggal, SUM(nominal) AS total FROM pengeluaran WHERE chat_id=? AND tipe='keluar' AND substr(tanggal,1,7)=? GROUP BY tanggal ORDER BY tanggal")
       .bind(chatId, bulan).all(),
-    env.DB.prepare(
-      'SELECT kategori, SUM(nominal) AS total, COUNT(*) AS n FROM pengeluaran WHERE chat_id = ? AND substr(tanggal,1,7) = ? GROUP BY kategori ORDER BY total DESC')
+    env.DB.prepare("SELECT tanggal, SUM(nominal) AS total FROM pengeluaran WHERE chat_id=? AND tipe='masuk' AND substr(tanggal,1,7)=? GROUP BY tanggal ORDER BY tanggal")
       .bind(chatId, bulan).all(),
-    env.DB.prepare(
-      'SELECT id, tanggal, kategori, nominal, catatan FROM pengeluaran WHERE chat_id = ? AND substr(tanggal,1,7) = ? ORDER BY id DESC LIMIT 25')
+    env.DB.prepare("SELECT kategori, SUM(nominal) AS total, COUNT(*) AS n FROM pengeluaran WHERE chat_id=? AND tipe='keluar' AND substr(tanggal,1,7)=? GROUP BY kategori ORDER BY total DESC")
       .bind(chatId, bulan).all(),
+    env.DB.prepare("SELECT id, tanggal, kategori, nominal, catatan, tipe FROM pengeluaran WHERE chat_id=? AND substr(tanggal,1,7)=? ORDER BY id DESC LIMIT 60")
+      .bind(chatId, bulan).all(),
+    env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN tipe='masuk' THEN nominal ELSE 0 END),0) AS inc, COALESCE(SUM(CASE WHEN tipe='keluar' THEN nominal ELSE 0 END),0) AS exp FROM pengeluaran WHERE chat_id=? AND substr(tanggal,1,7)=?")
+      .bind(chatId, prevBulan(bulan)).first(),
+    env.DB.prepare("SELECT MAX(nominal) AS m FROM pengeluaran WHERE chat_id=? AND tipe='keluar' AND substr(tanggal,1,7)=?")
+      .bind(chatId, bulan).first(),
   ]);
-  const today = wibNow().toISOString().slice(0, 10);
-  const tToday = await env.DB.prepare(
-    'SELECT COALESCE(SUM(nominal),0) AS total FROM pengeluaran WHERE chat_id = ? AND tanggal = ?')
-    .bind(chatId, today).first();
+
+  const expenseTotal = Number(mExp ? mExp.total : 0);
+  const incomeTotal = Number(mInc ? mInc.total : 0);
+  const balance = Number(bal ? bal.inc - bal.exp : 0);
+  const budgetNom = budget ? Number(budget.nominal) : null;
+  const remainBudget = budgetNom !== null ? budgetNom - expenseTotal : null;
+
+  const dayExpArr = (dayExp.results || []).map((r) => ({ d: r.tanggal, v: Number(r.total) }));
+  const dayIncArr = (dayInc.results || []).map((r) => ({ d: r.tanggal, v: Number(r.total) }));
+  const catArr = (catL.results || []).map((r) => ({ k: r.kategori, v: Number(r.total), n: Number(r.n) }));
+  const tx = (recent.results || []).map((r) => ({
+    id: r.id, t: r.tanggal, k: r.kategori, v: Number(r.nominal), c: r.catatan || '', tp: r.tipe,
+  }));
+  const prevExp = Number(prev ? prev.exp : 0);
+  const prevInc = Number(prev ? prev.inc : 0);
+
+  // analytics
+  const days = dayExpArr.length;
+  const avgDaily = days ? Math.round(expenseTotal / days) : 0;
+  let maxDay = null;
+  for (const d of dayExpArr) if (!maxDay || d.v > maxDay.v) maxDay = d;
+  const topCat = catArr[0] || null;
+  let maxTxRow = null;
+  for (const x of tx) if (x.tp === 'keluar' && (!maxTxRow || x.v > maxTxRow.v)) maxTxRow = x;
+  const isCur = bulan === bulanWIB();
+  const dim = daysInMonth(bulan);
+  const dayNow = wibNow().getUTCDate();
+  const estEnd = isCur ? Math.round((expenseTotal / Math.max(1, dayNow)) * dim) : null;
+  const expDelta = prevExp > 0 ? Math.round(((expenseTotal - prevExp) / prevExp) * 100) : null;
+  const incDelta = prevInc > 0 ? Math.round(((incomeTotal - prevInc) / prevInc) * 100) : null;
+
   return {
-    total: Number(tot ? tot.total : 0),
-    count: Number(tot ? tot.n : 0),
-    budget: budget ? Number(budget.nominal) : null,
-    perDay: (perDay.results || []).map((r) => ({ tanggal: r.tanggal, total: Number(r.total) })),
-    perCat: (perCat.results || []).map((r) => ({ kategori: r.kategori, total: Number(r.total), n: Number(r.n) })),
-    recent: (recent.results || []),
-    today: Number(tToday ? tToday.total : 0),
-    todayLabel: today,
+    balance, incomeTotal, expenseTotal, expenseCount: Number(mExp ? mExp.n : 0),
+    budgetNom, remainBudget, dayExpArr, dayIncArr, catArr, tx,
+    prevExp, prevInc, avgDaily, maxDay, topCat, maxTxRow, estEnd, expDelta, incDelta, dim,
   };
 }
 
-const COLORS = ['#bf8ff5', '#9a6ff0', '#7a55d8', '#c08ff5', '#8f5bd8', '#a588e8',
-  '#6a4ec0', '#d9b4ff', '#4e36ac', '#b08fd3', '#c98fff', '#5a3fb5'];
+/* ---------- template ---------- */
+const COLORS = ['#A020F0', '#7B2FF7', '#F87171', '#22C55E', '#F59E0B', '#38BDF8',
+  '#EC4899', '#8B5CF6', '#FACC15', '#2DD4BF', '#FB923C', '#A78BFA'];
 
 const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Pengeluaran</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
- :root{--bg:#091428;--card:#141c35;--card2:#1a2339;--line:rgba(191,143,245,.14);--tx:#e6eaf3;--mut:#8f919f;
-  --purp:#bf8ff5;--lav:#cea2f7;--green:#22c55e;--red:#ef4444}
+ :root{--bg:#0C0B12;--card:#181622;--elev:#211E2D;--line:rgba(255,255,255,.07);--pline:rgba(160,32,240,.25);
+  --tx:#F5F3FA;--mut:#9B96AA;--p:#A020F0;--p2:#7B2FF7;--inc:#22C55E;--exp:#F87171}
  *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;
-  background:radial-gradient(1200px 520px at 75% -12%, rgba(191,143,245,.16), transparent 60%), var(--bg);color:var(--tx)}
- .wrap{max-width:1080px;margin:0 auto;padding:26px 18px 70px}
- header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px}
- .brand{display:flex;align-items:center;gap:12px}
- .logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#c08ff5,#4e4273);
-  display:flex;align-items:center;justify-content:center;font-size:21px;box-shadow:0 8px 24px rgba(191,143,245,.35)}
- h1{font-size:20px;margin:0;color:var(--lav);font-weight:700}
- .sub{color:var(--mut);font-size:12.5px;margin-top:2px}
- .nav{display:flex;gap:8px;align-items:center}
- .btn{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 14px;
-  border-radius:12px;text-decoration:none;font-size:14px;font-weight:600;transition:.15s}
- .btn:hover{border-color:var(--purp);color:var(--lav)}
- .logout{color:var(--mut);font-size:13px;text-decoration:none;margin-left:8px}
- .logout:hover{color:var(--red)}
- .hero{position:relative;overflow:hidden;border-radius:22px;padding:28px 30px;
-  background:linear-gradient(135deg,#b08fd3 0%,#7a55d8 45%,#4e4273 100%);
-  box-shadow:0 18px 50px rgba(80,60,160,.45);margin-bottom:18px}
- .hero::after{content:'';position:absolute;inset:0;background:radial-gradient(400px 200px at 85% 0%, rgba(255,255,255,.25), transparent 60%)}
- .hero>.in{position:relative}
- .hero .hl{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.85);font-weight:600}
- .hero .hv{font-size:38px;font-weight:800;color:#fff;margin-top:4px;letter-spacing:.5px}
- .hero .hs{font-size:13.5px;color:rgba(255,255,255,.85);margin-top:6px}
- .hero .hs b{color:#fff}
- .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
- .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;transition:.15s}
- .card:hover{border-color:var(--purp)}
- .card .lbl{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.8px}
- .card .val{font-size:23px;font-weight:800;margin-top:7px;color:var(--lav)}
- .card .val.red{color:var(--red)} .card .val.green{color:var(--green)}
- .card .sub2{color:var(--mut);font-size:12.5px;margin-top:4px}
- .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
- @media (max-width:760px){.grid{grid-template-columns:1fr}}
- .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
- .panel h2{font-size:12.5px;margin:0 0 14px;color:var(--mut);text-transform:uppercase;letter-spacing:.9px}
- .bar{height:26px;background:#0b1526;border-radius:8px;overflow:hidden;margin-bottom:6px;border:1px solid var(--line)}
- .bar>div{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;
-  padding-right:8px;font-size:11px;font-weight:800;color:#0c0c1c;min-width:34px}
- .cat{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  background:radial-gradient(1200px 520px at 75% -12%, rgba(160,32,240,.14), transparent 60%), var(--bg);color:var(--tx)}
+ .wrap{max-width:1100px;margin:0 auto;padding:26px 18px 80px}
+ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:8px}
+ .head-l{min-width:0}
+ h1{font-size:21px;margin:0;font-weight:700}
+ .sub{color:var(--mut);font-size:13px;margin-top:3px}
+ .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+ .btn{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 14px;border-radius:12px;
+  text-decoration:none;font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s}
+ .btn:hover{border-color:var(--p);color:#fff}
+ .btn.primary{background:linear-gradient(135deg,var(--p),var(--p2));border:0;color:#fff;box-shadow:0 8px 24px rgba(160,32,240,.3)}
+ .month{display:flex;align-items:center;gap:8px}
+ .month span{min-width:128px;text-align:center;font-weight:700}
+ .logout{color:var(--mut);font-size:13px;text-decoration:none}
+ .logout:hover{color:var(--exp)}
+ .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;position:relative;overflow:hidden}
+ .card .lbl{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:1px}
+ .card .val{font-size:24px;font-weight:800;margin-top:8px;letter-spacing:.3px}
+ .card .val.inc{color:var(--inc)} .card .val.exp{color:var(--exp)} .card .val.p{color:var(--p)}
+ .card .sub2{color:var(--mut);font-size:12.5px;margin-top:5px}
+ .card .sub2 .up{color:var(--inc)} .card .sub2 .dn{color:var(--exp)}
+ .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+ .grid1{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+ @media (max-width:820px){.grid2,.grid1{grid-template-columns:1fr}}
+ .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:14px}
+ .panel h2{font-size:12.5px;margin:0 0 14px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+ .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+ .stat{background:var(--elev);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+ .stat .lbl{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+ .stat .val{font-size:16px;font-weight:700;margin-top:4px}
+ .bud .bar{height:12px;background:var(--elev);border-radius:8px;overflow:hidden;margin:12px 0 8px;border:1px solid var(--line)}
+ .bud .bar div{height:100%;background:linear-gradient(90deg,var(--p),var(--p2));border-radius:8px}
+ .budrow{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}
+ .cat{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
  .cat:last-child{border-bottom:0}
- .dot{width:10px;height:10px;border-radius:50%;flex:none}
- .cat .nm{flex:1} .cat .amt{font-weight:700;color:var(--tx)} .cat .pct{color:var(--mut);font-size:12px;width:44px;text-align:right}
- table{width:100%;border-collapse:collapse;font-size:14px}
- th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)}
- th{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.9px}
- td{color:var(--tx)} .mut{color:var(--mut);font-size:13px}
+ .dot{width:10px;height:10px;border-radius:3px;flex:none}
+ .cat .nm{flex:1} .cat .amt{font-weight:700} .cat .pct{color:var(--mut);font-size:12px;width:44px;text-align:right}
+ .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+ .ins{background:var(--elev);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+ .ins .lbl{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+ .ins .val{font-size:15.5px;font-weight:700;margin-top:4px;color:var(--tx)}
+ .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+ .inp{background:var(--elev);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:9px 12px;
+  font-size:13.5px;color-scheme:dark}
+ .filters .inp[type=text]{flex:1;min-width:160px}
+ table{width:100%;border-collapse:collapse;font-size:13.5px}
+ th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+ th{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+ td.amt{text-align:right;font-weight:700}
+ td.amt.inc{color:var(--inc)} td.amt.exp{color:var(--tx)}
+ .chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700}
+ .chip.k{background:rgba(160,32,240,.15);color:#c9a0f5}
+ .chip.i{background:rgba(34,197,94,.14);color:var(--inc)}
+ .empty{color:var(--mut);text-align:center;padding:20px;font-size:13.5px}
+ .mut{color:var(--mut);font-size:13px}
+ /* modal */
+ .ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+ .ov.open{display:flex}
+ .modal{background:var(--card);border:1px solid var(--pline);border-radius:20px;padding:24px;width:100%;max-width:400px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+ .modal h3{margin:0 0 16px;font-size:17px}
+ .field{margin-bottom:12px}
+ .field label{display:block;font-size:12px;color:var(--mut);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
+ .row{display:flex;gap:10px}
+ .row .field{flex:1}
+ .seg{display:flex;background:var(--elev);border-radius:12px;padding:4px;gap:4px}
+ .seg button{flex:1;border:0;background:transparent;color:var(--mut);padding:8px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer}
+ .seg button.on{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff}
+ .cbtn{width:100%;margin-top:6px}
+ select.inp{width:100%}
+ textarea.inp{width:100%;resize:vertical;font-family:inherit}
 </style></head><body>
 <div class="wrap">
 
 <header>
-  <div class="brand">
-    <div class="logo">📒</div>
-    <div><h1>Dashboard Pengeluaran</h1><div class="sub">{SUB}</div></div>
-  </div>
-  <div class="nav">
-    <a class="btn" href="?bulan={PREV}">←</a>
-    <span style="font-weight:700;min-width:150px;text-align:center;color:var(--tx)">{BULAN}</span>
-    <a class="btn" href="?bulan={NEXT}">→</a>
+  <div class="head-l"><h1>{GREET}</h1><div class="sub">{DATE} · {SUB}</div></div>
+  <div class="actions">
+    <div class="month">
+      <a class="btn" href="?bulan={PREV}">←</a><span>{BULAN}</span><a class="btn" href="?bulan={NEXT}">→</a>
+    </div>
+    <button class="btn primary" onclick="openAdd()">＋ Tambah</button>
     <a class="logout" href="/logout">Keluar</a>
   </div>
 </header>
 
-{HERO}
-
-{CARDS}
-
-<div class="grid">
-  <div class="panel"><h2>Pengeluaran per hari</h2><canvas id="daily"></canvas></div>
-  <div class="panel"><h2>Per kategori</h2><canvas id="cat"></canvas>
-    <div style="margin-top:14px">{CATLIST}</div></div>
+<div class="cards">
+  <div class="card"><div class="lbl">Saldo saat ini</div><div class="val {BALANCE_CLS}">{BALANCE}</div><div class="sub2">masuk − keluar (semua waktu)</div></div>
+  <div class="card"><div class="lbl">Pemasukan bulan ini</div><div class="val inc">{INCOME}</div><div class="sub2">{INCOME_DELTA}</div></div>
+  <div class="card"><div class="lbl">Pengeluaran bulan ini</div><div class="val exp">{EXPENSE}</div><div class="sub2">{EXPENSE_COUNT} transaksi · {EXPENSE_DELTA}</div></div>
+  <div class="card"><div class="lbl">Sisa budget</div><div class="val {REMAIN_CLS}">{REMAIN}</div><div class="sub2">target {BUDGET_TARGET}</div></div>
 </div>
 
-<div class="panel" style="margin-top:14px">
-  <h2>Catatan terbaru · {BULAN}</h2>
-  {TABLE}
+<div class="grid2">
+  <div class="panel">
+    <h2>Analisa Pengeluaran · {BULAN}</h2>
+    <canvas id="daily" height="120"></canvas>
+    <div class="stats">
+      <div class="stat"><div class="lbl">Rata-rata harian</div><div class="val">{AVG_DAILY}</div></div>
+      <div class="stat"><div class="lbl">Hari terbesar</div><div class="val">{MAX_DAY_VAL}</div><div class="mut">{MAX_DAY_LBL}</div></div>
+      <div class="stat"><div class="lbl">vs bulan lalu</div><div class="val">{EXP_ΔTA}</div><div class="mut">pengeluaran</div></div>
+      <div class="stat"><div class="lbl">Proyeksi akhir bulan</div><div class="val">{EST_END}</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Kategori Pengeluaran</h2>
+    <canvas id="cat" height="150"></canvas>
+    <div style="margin-top:12px">{CATLIST}</div>
+  </div>
+</div>
+
+<div class="grid1">
+  <div class="panel bud">
+    <h2>Budget Bulanan</h2>
+    {BUDGET_BODY}
+  </div>
+  <div class="panel">
+    <h2>Insight Pribadi</h2>
+    <div class="insights">{INSIGHTS}</div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Transaksi Terbaru · {BULAN}</h2>
+  <div class="filters">
+    <input class="inp" type="text" id="fq" placeholder="Cari kategori / catatan…">
+    <select class="inp" id="fc"><option value="">Semua kategori</option>{CATOPTIONS}</select>
+    <select class="inp" id="ft"><option value="">Semua jenis</option><option value="keluar">Keluar</option><option value="masuk">Masuk</option></select>
+    <input class="inp" type="date" id="fd1"><input class="inp" type="date" id="fd2">
+  </div>
+  <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th></tr></thead><tbody id="txbody"></tbody></table>
+  <div class="empty" id="txempty">Tidak ada transaksi bulan ini.</div>
 </div>
 
 </div>
+
+<div class="ov" id="ov">
+  <div class="modal">
+    <h3>Tambah transaksi</h3>
+    <div class="seg" id="seg">
+      <button type="button" data-tp="keluar" class="on">Keluar</button>
+      <button type="button" data-tp="masuk">Masuk</button>
+    </div>
+    <div class="field" style="margin-top:12px"><label>Nominal (Rp)</label><input class="inp" type="number" id="qNom" min="1" placeholder="50000" style="width:100%"></div>
+    <div class="row">
+      <div class="field"><label>Kategori</label><input class="inp" id="qKat" list="cats" placeholder="makan" style="width:100%"></div>
+    </div>
+    <datalist id="cats">{CATS}</datalist>
+    <div class="field"><label>Catatan (opsional)</label><input class="inp" id="qCat" placeholder="nasi padang" style="width:100%"></div>
+    <button class="btn primary cbtn" id="qSave">Simpan</button>
+    <button class="btn cbtn" style="margin-top:8px" onclick="closeAdd()">Batal</button>
+  </div>
+</div>
+
 <script>
-const DAILY = {DAILYJSON};
-const CAT = {CATJSON};
-const COLORS = {COLORSJSON};
+const TX = {TXJSON};
+const CATS = {CATJSON};
+const COL = {COLORSJSON};
+const TOMORROW = {TOMORROW};
+const T0 = {T0};
+
+// chart harian: batang pengeluaran + garis pemasukan
+const DAILY = [DAILYJSON];
+const INC = [INCOMEJSON];
+const mergeD = [...new Set([...DAILY.map(x=>x.d), ...INC.map(x=>x.d)])].sort();
 new Chart(document.getElementById('daily'), {
-  type:'bar',
-  data:{ labels:DAILY.map(d=>d.tanggal.slice(5)),
-    datasets:[{ data:DAILY.map(d=>d.total), backgroundColor:'#bf8ff5',
-      hoverBackgroundColor:'#d9b4ff', borderRadius:7, barPercentage:0.65 }]},
-  options:{ plugins:{legend:{display:false}}, scales:{
-    x:{ticks:{color:'#8f919f',maxRotation:0},grid:{display:false}},
-    y:{beginAtZero:true,ticks:{color:'#8f919f'},grid:{color:'rgba(191,143,245,.08)'}} }}
+  data:{ labels: mergeD.map(d=>d.slice(5)),
+    datasets:[
+      { type:'bar', label:'Keluar', data: mergeD.map(d=>(DAILY.find(x=>x.d===d)||{}).v||0), backgroundColor:'#F87171', borderRadius:6, barPercentage:0.6 },
+      { type:'line', label:'Masuk', data: mergeD.map(d=>(INC.find(x=>x.d===d)||{}).v||0), borderColor:'#22C55E', backgroundColor:'#22C55E', tension:.35, pointRadius:3 }
+    ]},
+  options:{ plugins:{legend:{labels:{color:'#9B96AA',boxWidth:10,font:{size:12}}}}, scales:{
+    x:{ticks:{color:'#9B96AA',maxRotation:0},grid:{display:false}},
+    y:{beginAtZero:true,ticks:{color:'#9B96AA'},grid:{color:'rgba(255,255,255,.05)'}} }}
 });
 new Chart(document.getElementById('cat'), {
   type:'doughnut',
-  data:{ labels:CAT.map(c=>c.kategori),
-    datasets:[{ data:CAT.map(c=>c.total), backgroundColor:COLORS.slice(0,CAT.length),
-      borderColor:'#141c35', borderWidth:2 }]},
-  options:{ plugins:{ legend:{ position:'bottom', labels:{color:'#cbd0da',boxWidth:10,font:{size:12}} } }}
+  data:{ labels:CATS.map(c=>c.k), datasets:[{ data:CATS.map(c=>c.v), backgroundColor:COL.slice(0,CATS.length), borderColor:'#181622', borderWidth:2 }]},
+  options:{ plugins:{ legend:{ position:'bottom', labels:{color:'#9B96AA',boxWidth:10,font:{size:12}} } }}
 });
+
+// filter transaksi
+let selected={q:'',c:'',t:'',d1:'',d2:''};
+function escH(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtRp(n){return 'Rp '+Number(n).toLocaleString('id-ID');}
+function renderTx(){
+  const list=TX.filter(t=>{
+    if(selected.q && !(t.k+' '+t.c).toLowerCase().includes(selected.q)) return false;
+    if(selected.c && t.k!==selected.c) return false;
+    if(selected.t && t.tp!==selected.t) return false;
+    if(selected.d1 && t.t<selected.d1) return false;
+    if(selected.d2 && t.t>selected.d2) return false;
+    return true;
+  });
+  const body=document.getElementById('txbody');
+  body.innerHTML=list.map(t=>{
+    const chip = t.tp==='masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
+    const cls = t.tp==='masuk' ? 'amt inc' : 'amt';
+    return '<tr><td class="mut">'+escH(t.t.slice(5).replace('-','/'))+'</td><td>'+chip+'</td><td>'+escH(t.k)+'</td><td class="mut">'+escH(t.c)+'</td><td class="'+cls+'">'+fmtRp(t.v)+'</td></tr>';
+  }).join('');
+  document.getElementById('txempty').style.display = list.length ? 'none' : 'block';
+}
+document.getElementById('fq').oninput=e=>{selected.q=e.target.value.toLowerCase();renderTx();};
+document.getElementById('fc').onchange=e=>{selected.c=e.target.value;renderTx();};
+document.getElementById('ft').onchange=e=>{selected.t=e.target.value;renderTx();};
+document.getElementById('fd1').onchange=e=>{selected.d1=e.target.value;renderTx();};
+document.getElementById('fd2').onchange=e=>{selected.d2=e.target.value;renderTx();};
+renderTx();
+
+// quick add
+let qType='keluar';
+document.getElementById('seg').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{ qType=b.dataset.tp; document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+});
+function openAdd(){document.getElementById('ov').classList.add('open');}
+function closeAdd(){document.getElementById('ov').classList.remove('open');}
+document.getElementById('qSave').onclick=async()=>{
+  const nominal=document.getElementById('qNom').value.trim();
+  const kategori=document.getElementById('qKat').value.trim();
+  const catatan=document.getElementById('qCat').value.trim();
+  if(!nominal || !kategori){ alert('Isi nominal dan kategori'); return; }
+  const r=await fetch('/api/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({tipe:qType,nominal,kategori,catatan})});
+  const j=await r.json();
+  if(j.ok) location.reload(); else alert('Gagal menyimpan.');
+};
+window.openAdd=openAdd; window.closeAdd=closeAdd;
 </script>
 </body></html>`;
 
-const HERO = `<div class="hero"><div class="in">
-  <div class="hl">Total pengeluaran</div>
-  <div class="hv">{TOTAL}</div>
-  <div class="hs"><b>{COUNT}</b> catatan · hari ini <b>{TODAY}</b></div>
-</div></div>`;
-
-const CARD_HTML = `<div class="card"><div class="lbl">Hari ini ({TGL})</div><div class="val green">{TODAY}</div></div>`;
-const CARD_BUDGET = `<div class="card"><div class="lbl">Budget</div><div class="val {BUDGET_CLS}">{BUDGET}</div><div class="sub2">Terpakai {SPENT}</div></div>`;
-const CARD_SISA = `<div class="card"><div class="lbl">Sisa budget</div><div class="val {SISA_CLS}">{SISA}</div></div>`;
-
-function html(url, bulan, chatId, data) {
+/* ---------- render ---------- */
+function html(url, bulan, chatId, d) {
   const prev = prevBulan(bulan), next = nextBulan(bulan);
+  const rp = (n) => 'Rp ' + nf(n);
 
-  const hero = HERO
-    .replace('{TOTAL}', 'Rp ' + nf(data.total))
-    .replace('{COUNT}', String(data.count))
-    .replace('{TODAY}', 'Rp ' + nf(data.today));
+  const balCls = d.balance >= 0 ? 'inc' : 'exp';
+  const remainCls = d.remainBudget === null ? 'p' : (d.remainBudget >= 0 ? 'inc' : 'exp');
 
-  let cards = CARD_HTML
-    .replace('{TGL}', esc(data.todayLabel.slice(5).replace('-', '/')))
-    .replace('{TODAY}', 'Rp ' + nf(data.today));
+  const incDelta = d.incDelta === null ? '' : (d.incDelta >= 0 ? `<span class="up">▲ ${d.incDelta}%</span>` : `<span class="dn">▼ ${Math.abs(d.incDelta)}%</span>`);
+  const expDelta = d.expDelta === null ? '' : (d.expDelta >= 0 ? `<span class="dn">▲ ${d.expDelta}%</span>` : `<span class="up">▼ ${Math.abs(d.expDelta)}%</span>`);
 
-  if (data.budget !== null) {
-    const sisa = data.budget - data.total;
-    cards += CARD_BUDGET.replace('{BUDGET}', 'Rp ' + nf(data.budget))
-      .replace('{BUDGET_CLS}', sisa < 0 ? 'red' : 'green')
-      .replace('{SPENT}', 'Rp ' + nf(data.total))
-      + CARD_SISA.replace('{SISA}', (sisa >= 0 ? '' : '−Rp ') + nf(Math.abs(sisa)))
-        .replace('{SISA_CLS}', sisa < 0 ? 'red' : 'green');
+  const maxDayVal = d.maxDay ? rp(d.maxDay.v) : '—';
+  const maxDayLbl = d.maxDay ? d.maxDay.d.slice(5).replace('-', '/') : 'belum ada data';
+  const estEnd = d.estEnd === null ? (bulan === bulanWIB() ? '—' : '—') : rp(d.estEnd);
+
+  // budget body
+  let budgetBody;
+  if (d.budgetNom === null) {
+    budgetBody = `<div class="mut">Belum nyet budget bulan ini. Ketik <b>/budget &lt;nominal&gt;</b> di bot.</div>`;
   } else {
-    cards += `<div class="card"><div class="lbl">Budget</div><div class="sub2">Belum diset. Ketik /budget <nominal> di bot.</div></div>`;
+    const pct = Math.min(100, Math.round((d.expenseTotal / d.budgetNom) * 100));
+    const remainTxt = d.remainBudget >= 0 ? `Sisa ${rp(d.remainBudget)}` : `Lebih ${rp(-d.remainBudget)}`;
+    budgetBody = `<div class="budrow"><span>Target</span><b>${rp(d.budgetNom)}</b></div>
+      <div class="bar"><div style="width:${pct}%"></div></div>
+      <div class="budrow"><span>Terpakai ${rp(d.expenseTotal)}</span><span>${pct}%</span></div>
+      <div class="budrow"><span style="color:${d.remainBudget>=0?'var(--inc)':'var(--exp)'}">${remainTxt}</span></div>`;
   }
 
+  // categ list
   let catList = '';
-  const catMax = data.perCat.length ? data.perCat[0].total : 1;
-  const catCol = COLORS.slice(0, data.perCat.length);
-  data.perCat.forEach((c, i) => {
-    const p = Math.round((c.total / (data.total || 1)) * 100);
-    catList += `<div class="cat">
-      <span class="dot" style="background:${catCol[i]}"></span>
-      <span class="nm">${esc(c.kategori)}</span>
-      <span class="amt">Rp ${nf(c.total)}</span>
-      <span class="pct">${p}%</span></div>
-      <div class="bar"><div style="width:${Math.max((c.total / catMax) * 100, 4)}%;background:${catCol[i]}">${c.n}x</div></div>`;
+  const catCol = COLORS.slice(0, d.catArr.length);
+  d.catArr.forEach((c, i) => {
+    const p = Math.round((c.v / (d.expenseTotal || 1)) * 100);
+    catList += `<div class="cat"><span class="dot" style="background:${catCol[i]}"></span>
+      <span class="nm">${esc(c.k)}</span><span class="amt">${rp(c.v)}</span>
+      <span class="pct">${p}%</span></div>`;
   });
+  if (!catList) catList = `<div class="mut">Belum ada pengeluaran bulan ini.</div>`;
 
-  let table = data.recent.length ? '<table><thead><tr><th>Tanggal</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th></tr></thead><tbody>'
-    + data.recent.map((r) => `<tr><td class="mut">${esc(fmtTgl(r.tanggal))}</td><td>${esc(r.kategori)}</td><td class="mut">${esc(r.catatan || '')}</td><td style="text-align:right;font-weight:700;color:#cea2f7">Rp ${nf(r.nominal)}</td></tr>`).join('')
-    + '</tbody></table>'
-    : `<div class="mut">Belum ada data bulan ini untuk kamu.</div>`;
+  // insights
+  let ins = '';
+  ins += `<div class="ins"><div class="lbl">Kategori terbesar</div><div class="val">${d.topCat ? esc(d.topCat.k) : '—'}</div></div>`;
+  ins += `<div class="ins"><div class="lbl">vs bulan lalu</div><div class="val">${d.expDelta === null ? '—' : d.expDelta >= 0 ? '▲ ' + d.expDelta + '%' : '▼ ' + Math.abs(d.expDelta) + '%'}</div></div>`;
+  ins += `<div class="ins"><div class="lbl">Rata-rata harian</div><div class="val">${rp(d.avgDaily)}</div></div>`;
+  ins += `<div class="ins"><div class="lbl">Transaksi terbesar</div><div class="val">${d.maxTxRow ? rp(d.maxTxRow.v) : '—'}</div><div class="mut">${d.maxTxRow ? esc(d.maxTxRow.k) : ''}</div></div>`;
+  ins += `<div class="ins"><div class="lbl">Proyeksi akhir bulan</div><div class="val">${estEnd}</div></div>`;
+
+  // tx / categories for select/datalist
+  const catOptions = d.catArr.map((c) => `<option value="${esc(c.k)}">`).join('');
+  const catS = d.catArr.map((c) => `<option value="${esc(c.k)}">`).join('');
+  const t0 = bulan + '-01';
+  const tomorrow = '2099-12-31';
 
   return new Response(LAYOUT
-    .replace('{SUB}', esc(`Data pribadi · chat ${chatId}`))
+    .split('{GREET}').join(esc(greetingWIB()))
+    .split('{DATE}').join(esc(todayLabelWIB()))
+    .split('{SUB}').join(esc(`chat ${chatId}`))
     .split('{BULAN}').join(esc(fmtBulan(bulan)))
-    .replace('{PREV}', prev)
-    .replace('{NEXT}', next)
-    .replace('{HERO}', hero)
-    .replace('{CARDS}', cards)
-    .replace('{CATLIST}', catList)
-    .replace('{TABLE}', table)
-    .replace('{DAILYJSON}', JSON.stringify(data.perDay))
-    .replace('{CATJSON}', JSON.stringify(data.perCat))
-    .replace('{COLORSJSON}', JSON.stringify(catCol)),
+    .split('{PREV}').join(prev)
+    .split('{NEXT}').join(next)
+    .split('{BALANCE}').join(rp(d.balance))
+    .split('{BALANCE_CLS}').join(balCls)
+    .split('{INCOME}').join(rp(d.incomeTotal))
+    .split('{INCOME_DELTA}').join(incDelta)
+    .split('{EXPENSE}').join(rp(d.expenseTotal))
+    .split('{EXPENSE_COUNT}').join(String(d.expenseCount))
+    .split('{EXPENSE_DELTA}').join(expDelta)
+    .split('{REMAIN}').join(d.remainBudget === null ? '—' : rp(d.remainBudget))
+    .split('{REMAIN_CLS}').join(remainCls)
+    .split('{BUDGET_TARGET}').join(d.budgetNom === null ? 'belum diset' : rp(d.budgetNom))
+    .split('{AVG_DAILY}').join(rp(d.avgDaily))
+    .split('{MAX_DAY_VAL}').join(maxDayVal)
+    .split('{MAX_DAY_LBL}').join(esc(maxDayLbl))
+    .split('{EXP_ΔTA}').join(d.expDelta === null ? '—' : (d.expDelta >= 0 ? '▲ ' + d.expDelta + '%' : '▼ ' + Math.abs(d.expDelta) + '%'))
+    .split('{EST_END}').join(estEnd)
+    .split('{CATLIST}').join(catList)
+    .split('{INSIGHTS}').join(ins)
+    .split('{BUDGET_BODY}').join(budgetBody)
+    .split('{CATOPTIONS}').join(catOptions)
+    .split('{CATS}').join(catS)
+    .split('{TXJSON}').join(JSON.stringify(d.tx))
+    .split('{CATJSON}').join(JSON.stringify(d.catArr.map((c) => ({ k: c.k, v: c.v }))))
+    .split('{COLORSJSON}').join(JSON.stringify(catCol))
+    .split('{DAILYJSON}').join(JSON.stringify(d.dayExpArr))
+    .split('{INCOMEJSON}').join(JSON.stringify(d.dayIncArr))
+    .split('{T0}').join(t0)
+    .split('{TOMORROW}').join(tomorrow),
     { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 

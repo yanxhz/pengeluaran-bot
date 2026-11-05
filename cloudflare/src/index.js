@@ -1,4 +1,4 @@
-import { handleDashboard, handleCheckLogin, handleLogout } from './dashboard.js';
+import { handleDashboard, handleCheckLogin, handleLogout, handleAdd } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -17,6 +17,9 @@ export default {
     }
     if (url.pathname === '/api/login/check') {
       return handleCheckLogin(request, env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/add') {
+      return handleAdd(request, env);
     }
     if (request.method !== 'POST' || url.pathname !== '/webhook') {
       return new Response('not found', { status: 404 });
@@ -112,6 +115,7 @@ const HELP =
   'Halo! Aku bot pencatat pengeluaran 📒\n\n' +
   '📝 Cara catat:\n' +
   '  makan 15000 — catat pengeluaran (hari ini)\n' +
+  '  +gaji 5000000 — catat PEMASUKAN (mis. gaji/bonus)\n' +
   '  makan siang 15000 — kategori bisa lebih dari 1 kata\n' +
   '  makan 15000 kemarin — catat buat tanggal kemarin\n' +
   '  makan 15000 tgl 27/10 — catat buat tanggal tertentu\n' +
@@ -324,18 +328,22 @@ async function handleUpdate(update, env) {
     }
   }
 
-  const parsed = parsePesan(text, msg.date);
+  let rawIn = text;
+  let tipe = 'keluar';
+  if (rawIn.charAt(0) === '+') { tipe = 'masuk'; rawIn = rawIn.slice(1).trim(); }
+  const parsed = parsePesan(rawIn, msg.date);
   if (!parsed) {
-    await sendMsg(env, chatId, "Aku gak paham. Contoh: 'makan 15000' atau '15000 transport'. Ketik /bantuan.");
+    await sendMsg(env, chatId, "Aku gak paham. Contoh: 'makan 15000' atau '+gaji 5000000'. Ketik /bantuan.");
     return;
   }
   const res = await env.DB
-    .prepare('INSERT INTO pengeluaran (chat_id, tanggal, kategori, nominal, catatan) VALUES (?, ?, ?, ?, ?)')
-    .bind(chatId, parsed.tanggal, parsed.kategori, parsed.nominal, parsed.catatan)
+    .prepare('INSERT INTO pengeluaran (chat_id, tanggal, kategori, nominal, catatan, tipe) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(chatId, parsed.tanggal, parsed.kategori, parsed.nominal, parsed.catatan, tipe)
     .run();
+  const emoji = tipe === 'masuk' ? '📥 Masuk' : '✅ Keluar';
   const catatan = parsed.catatan ? `\n  Catatan: ${parsed.catatan}` : '';
   const infoTgl = parsed.tanggal !== wibDate(msg.date) ? `\n  📅 ${fmtTanggal(parsed.tanggal)}` : '';
-  await sendMsg(env, chatId, `✅ Tercatat:\n  ${parsed.kategori}: Rp ${nf(parsed.nominal)}${catatan}${infoTgl}`);
+  await sendMsg(env, chatId, `${emoji} tercatat:\n  ${parsed.kategori}: Rp ${nf(parsed.nominal)}${catatan}${infoTgl}`);
 }
 
 async function handleCommand(chatId, text, msg, env) {
