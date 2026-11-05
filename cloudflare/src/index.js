@@ -1,4 +1,4 @@
-import { handleDashboard, handleCheckLogin, handleLogout, handleAdd } from './dashboard.js';
+import { handleDashboard, handleCheckLogin, handleLogout, handleAdd, handleEdit, handleDelete, handleBudget } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -20,6 +20,15 @@ export default {
     }
     if (request.method === 'POST' && url.pathname === '/api/add') {
       return handleAdd(request, env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/edit') {
+      return handleEdit(request, env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/delete') {
+      return handleDelete(request, env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/budget') {
+      return handleBudget(request, env);
     }
     if (request.method !== 'POST' || url.pathname !== '/webhook') {
       return new Response('not found', { status: 404 });
