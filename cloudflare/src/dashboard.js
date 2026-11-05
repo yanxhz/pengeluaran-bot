@@ -128,11 +128,14 @@ function loginPage(code, botUsername) {
  .big:hover{filter:brightness(1.08)}
  .status{margin-top:18px;color:var(--mut);font-size:13px}
  .ok{color:#22C55E;font-weight:700}
+ .big2{margin-top:16px;background:transparent;border:1px solid rgba(160,32,240,.4);color:var(--tx);padding:11px;border-radius:12px;font-size:13.5px;font-weight:700;cursor:pointer;transition:.15s}
+ .big2:hover{border-color:var(--p)}
 </style></head><body>
 <div class="card"><h1>🔒 Catatan Pengeluaran</h1>
 <p>Klik tombol di bawah, buka di Telegram, lalu tekan <b>Start</b>. Setelah itu kembali ke halaman ini.</p>
 <a class="big" href="${link}" target="_blank">Masuk dengan Telegram</a>
 <div class="status" id="st">Menunggu kamu menekan Start di Telegram…</div>
+<button class="big2" style="margin-top:16px;width:100%" onclick="tryLogin()">✓ Saya sudah tekan Start</button>
 </div>
 <script>
 const CODE = ${JSON.stringify(code)};
@@ -143,6 +146,13 @@ const CODE = ${JSON.stringify(code)};
       else setTimeout(poll,2000);
     }).catch(()=>setTimeout(poll,3000));
 })();
+function tryLogin(){
+  fetch('/api/login/check?code='+CODE,{credentials:'same-origin'})
+    .then(r=>r.json()).then(j=>{
+      if(j.ok){ location.href='/dashboard'; }
+      else { document.getElementById('st').textContent='Belum terdeteksi. Pastikan sudah tekan Start di Telegram, lalu coba lagi.'; }
+    }).catch(()=>document.getElementById('st').textContent='Gagal hubungi server.');
+}
 </script>
 </body></html>`;
   return new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8' } });
