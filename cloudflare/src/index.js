@@ -1,4 +1,4 @@
-import { handleDashboard } from './dashboard.js';
+import { handleDashboard, handleAuth, handleLogout } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -7,7 +7,16 @@ export default {
       if (url.pathname === '/' || url.pathname === '/dashboard') {
         return handleDashboard(request, env);
       }
+      if (url.pathname === '/auth') {
+        return handleAuth(request, env);
+      }
+      if (url.pathname === '/logout') {
+        return handleLogout();
+      }
       return new Response('not found', { status: 404 });
+    }
+    if (url.pathname === '/auth') {
+      return handleAuth(request, env);
     }
     if (request.method !== 'POST' || url.pathname !== '/webhook') {
       return new Response('not found', { status: 404 });
