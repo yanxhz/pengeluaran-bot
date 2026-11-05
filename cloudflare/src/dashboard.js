@@ -1,7 +1,6 @@
 // Dashboard web multiuser untuk bot catatan pengeluaran.
-// Login via deep-link kode: dashboard bikin kode, user klik link t.me/<bot>?start=di_<kode>,
-// bot mencatat chat_id untuk kode itu, dashboard polling dan mengeluarkan cookie sesi per-user.
-// (Tidak bergantung pada Telegram Login Widget / /setdomain — domain-independent.)
+// Login via deep-link kode (domain-independent).
+// Gaya: dark navy + aksen ungu + hero gradien (referensi user).
 
 const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -42,7 +41,7 @@ async function secretKey(env) {
   if (!_secret) {
     const tk = env.TELEGRAM_TOKEN;
     if (!tk) return null;
-    _secret = new Uint8Array(await digestBytes(tk)); // kunci HMAC = sha256(bot token)
+    _secret = new Uint8Array(await digestBytes(tk));
   }
   return _secret;
 }
@@ -99,27 +98,29 @@ async function takeCode(env, code) {
     'SELECT chat_id, created FROM login_req WHERE code = ?'
   ).bind(code).first();
   if (!row || !row.chat_id) return null;
-  if (Date.now() - Number(row.created) > 10 * 60 * 1000) return null; // > 10 mnt
+  if (Date.now() - Number(row.created) > 10 * 60 * 1000) return null;
   return Number(row.chat_id);
 }
 
-/* ---------- halaman login (deep-link) ---------- */
+/* ---------- halaman login ---------- */
 function loginPage(code, botUsername) {
   const link = `https://t.me/${botUsername}?start=di_${code}`;
   const body = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Masuk — Catatan Pengeluaran</title>
 <style>
- body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#0f172a;color:#e2e8f0;
- display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
- .card{background:#1e293b;padding:36px;border-radius:16px;width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);text-align:center}
- h1{font-size:20px;margin:0 0 6px} p{color:#94a3b8;font-size:13px;margin:0 0 22px;line-height:1.6}
- .big{display:inline-block;background:#2aabee;color:#fff;font-weight:700;padding:13px 22px;border-radius:12px;
- text-decoration:none;font-size:15px}
+ :root{--bg:#091428;--card:#141c35;--line:rgba(191,143,245,.16);--tx:#e6eaf3;--mut:#8f919f;--purp:#bf8ff5}
+ body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:radial-gradient(1200px 500px at 70% -10%, rgba(191,143,245,.18), transparent 60%), var(--bg);
+ color:var(--tx);display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+ .card{background:var(--card);border:1px solid var(--line);padding:40px;border-radius:22px;width:380px;
+ box-shadow:0 20px 60px rgba(0,0,0,.45);text-align:center}
+ h1{font-size:21px;margin:0 0 6px;color:#cea2f7}
+ p{color:var(--mut);font-size:13.5px;margin:0 0 26px;line-height:1.6}
+ .big{display:inline-block;background:linear-gradient(135deg,#c08ff5,#9a6ff0);color:#0a0a1a;font-weight:800;
+ padding:14px 26px;border-radius:14px;text-decoration:none;font-size:15px;box-shadow:0 10px 30px rgba(191,143,245,.35)}
  .big:hover{filter:brightness(1.08)}
- .status{margin-top:16px;color:#94a3b8;font-size:13px}
+ .status{margin-top:18px;color:var(--mut);font-size:13px}
  .ok{color:#22c55e;font-weight:700}
- .mut{color:#94a3b8;font-size:13px}
 </style></head><body>
 <div class="card"><h1>🔒 Catatan Pengeluaran</h1>
 <p>Klik tombol di bawah, buka di Telegram, lalu tekan <b>Start</b>. Setelah itu kembali ke halaman ini.</p>
@@ -225,69 +226,89 @@ async function getMonthData(env, chatId, bulan) {
   };
 }
 
-const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4',
-  '#ec4899', '#84cc16', '#f97316', '#14b8a6', '#a855f7', '#e11d48'];
+const COLORS = ['#bf8ff5', '#9a6ff0', '#7a55d8', '#c08ff5', '#8f5bd8', '#a588e8',
+  '#6a4ec0', '#d9b4ff', '#4e36ac', '#b08fd3', '#c98fff', '#5a3fb5'];
 
 const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Pengeluaran</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
- :root{--bg:#0f172a;--card:#1e293b;--line:#334155;--tx:#e2e8f0;--mut:#94a3b8;--green:#22c55e;--red:#ef4444}
+ :root{--bg:#091428;--card:#141c35;--card2:#1a2339;--line:rgba(191,143,245,.14);--tx:#e6eaf3;--mut:#8f919f;
+  --purp:#bf8ff5;--lav:#cea2f7;--green:#22c55e;--red:#ef4444}
  *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;
- background:var(--bg);color:var(--tx)}
- .wrap{max-width:980px;margin:0 auto;padding:24px 16px 60px}
- header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
- h1{font-size:22px;margin:0} .sub{color:var(--mut);font-size:13px}
+  background:radial-gradient(1200px 520px at 75% -12%, rgba(191,143,245,.16), transparent 60%), var(--bg);color:var(--tx)}
+ .wrap{max-width:1080px;margin:0 auto;padding:26px 18px 70px}
+ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px}
+ .brand{display:flex;align-items:center;gap:12px}
+ .logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#c08ff5,#4e4273);
+  display:flex;align-items:center;justify-content:center;font-size:21px;box-shadow:0 8px 24px rgba(191,143,245,.35)}
+ h1{font-size:20px;margin:0;color:var(--lav);font-weight:700}
+ .sub{color:var(--mut);font-size:12.5px;margin-top:2px}
  .nav{display:flex;gap:8px;align-items:center}
- .btn{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:8px 12px;
- border-radius:10px;text-decoration:none;font-size:14px;font-weight:600}
- .btn:hover{border-color:var(--green)}
- .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
- .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
- .card .lbl{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
- .card .val{font-size:22px;font-weight:800;margin-top:6px}
- .card .val.red{color:var(--red)} .card .val.green{color:var(--green)}
- .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
- @media (max-width:720px){.grid{grid-template-columns:1fr}}
- .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
- .panel h2{font-size:15px;margin:0 0 12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
- .bar{height:26px;background:#0f172a;border-radius:8px;overflow:hidden;margin-bottom:6px}
- .bar>div{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;
- padding-right:8px;font-size:11px;font-weight:800;color:#052e16;min-width:34px}
- .cat{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
- .cat:last-child{border-bottom:0}
- .dot{width:10px;height:10px;border-radius:50%;flex:none}
- .cat .nm{flex:1} .cat .amt{font-weight:700} .cat .pct{color:var(--mut);font-size:12px;width:44px;text-align:right}
- table{width:100%;border-collapse:collapse;font-size:14px}
- th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
- th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
- .mut{color:var(--mut);font-size:13px}
+ .btn{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 14px;
+  border-radius:12px;text-decoration:none;font-size:14px;font-weight:600;transition:.15s}
+ .btn:hover{border-color:var(--purp);color:var(--lav)}
  .logout{color:var(--mut);font-size:13px;text-decoration:none;margin-left:8px}
  .logout:hover{color:var(--red)}
+ .hero{position:relative;overflow:hidden;border-radius:22px;padding:28px 30px;
+  background:linear-gradient(135deg,#b08fd3 0%,#7a55d8 45%,#4e4273 100%);
+  box-shadow:0 18px 50px rgba(80,60,160,.45);margin-bottom:18px}
+ .hero::after{content:'';position:absolute;inset:0;background:radial-gradient(400px 200px at 85% 0%, rgba(255,255,255,.25), transparent 60%)}
+ .hero>.in{position:relative}
+ .hero .hl{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.85);font-weight:600}
+ .hero .hv{font-size:38px;font-weight:800;color:#fff;margin-top:4px;letter-spacing:.5px}
+ .hero .hs{font-size:13.5px;color:rgba(255,255,255,.85);margin-top:6px}
+ .hero .hs b{color:#fff}
+ .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;transition:.15s}
+ .card:hover{border-color:var(--purp)}
+ .card .lbl{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.8px}
+ .card .val{font-size:23px;font-weight:800;margin-top:7px;color:var(--lav)}
+ .card .val.red{color:var(--red)} .card .val.green{color:var(--green)}
+ .card .sub2{color:var(--mut);font-size:12.5px;margin-top:4px}
+ .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ @media (max-width:760px){.grid{grid-template-columns:1fr}}
+ .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+ .panel h2{font-size:12.5px;margin:0 0 14px;color:var(--mut);text-transform:uppercase;letter-spacing:.9px}
+ .bar{height:26px;background:#0b1526;border-radius:8px;overflow:hidden;margin-bottom:6px;border:1px solid var(--line)}
+ .bar>div{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;
+  padding-right:8px;font-size:11px;font-weight:800;color:#0c0c1c;min-width:34px}
+ .cat{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+ .cat:last-child{border-bottom:0}
+ .dot{width:10px;height:10px;border-radius:50%;flex:none}
+ .cat .nm{flex:1} .cat .amt{font-weight:700;color:var(--tx)} .cat .pct{color:var(--mut);font-size:12px;width:44px;text-align:right}
+ table{width:100%;border-collapse:collapse;font-size:14px}
+ th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)}
+ th{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.9px}
+ td{color:var(--tx)} .mut{color:var(--mut);font-size:13px}
 </style></head><body>
 <div class="wrap">
 
 <header>
-  <div><h1>📒 Dashboard Pengeluaran</h1>
-    <div class="sub">{SUB}</div></div>
+  <div class="brand">
+    <div class="logo">📒</div>
+    <div><h1>Dashboard Pengeluaran</h1><div class="sub">{SUB}</div></div>
+  </div>
   <div class="nav">
     <a class="btn" href="?bulan={PREV}">←</a>
-    <span style="font-weight:700;min-width:150px;text-align:center">{BULAN}</span>
+    <span style="font-weight:700;min-width:150px;text-align:center;color:var(--tx)">{BULAN}</span>
     <a class="btn" href="?bulan={NEXT}">→</a>
     <a class="logout" href="/logout">Keluar</a>
   </div>
 </header>
+
+{HERO}
 
 {CARDS}
 
 <div class="grid">
   <div class="panel"><h2>Pengeluaran per hari</h2><canvas id="daily"></canvas></div>
   <div class="panel"><h2>Per kategori</h2><canvas id="cat"></canvas>
-    <div style="margin-top:12px">{CATLIST}</div></div>
+    <div style="margin-top:14px">{CATLIST}</div></div>
 </div>
 
-<div class="panel" style="margin-top:12px">
+<div class="panel" style="margin-top:14px">
   <h2>Catatan terbaru · {BULAN}</h2>
   {TABLE}
 </div>
@@ -300,35 +321,43 @@ const COLORS = {COLORSJSON};
 new Chart(document.getElementById('daily'), {
   type:'bar',
   data:{ labels:DAILY.map(d=>d.tanggal.slice(5)),
-    datasets:[{ data:DAILY.map(d=>d.total), backgroundColor:'#22c55e',
-      borderRadius:6, barPercentage:0.7 }]},
+    datasets:[{ data:DAILY.map(d=>d.total), backgroundColor:'#bf8ff5',
+      hoverBackgroundColor:'#d9b4ff', borderRadius:7, barPercentage:0.65 }]},
   options:{ plugins:{legend:{display:false}}, scales:{
-    x:{ticks:{color:'#94a3b8',maxRotation:0},grid:{display:false}},
-    y:{beginAtZero:true,ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}} }}
+    x:{ticks:{color:'#8f919f',maxRotation:0},grid:{display:false}},
+    y:{beginAtZero:true,ticks:{color:'#8f919f'},grid:{color:'rgba(191,143,245,.08)'}} }}
 });
 new Chart(document.getElementById('cat'), {
   type:'doughnut',
   data:{ labels:CAT.map(c=>c.kategori),
     datasets:[{ data:CAT.map(c=>c.total), backgroundColor:COLORS.slice(0,CAT.length),
-      borderColor:'#1e293b', borderWidth:2 }]},
-  options:{ plugins:{ legend:{ position:'bottom', labels:{color:'#e2e8f0',boxWidth:10,font:{size:12}} } }}
+      borderColor:'#141c35', borderWidth:2 }]},
+  options:{ plugins:{ legend:{ position:'bottom', labels:{color:'#cbd0da',boxWidth:10,font:{size:12}} } }}
 });
 </script>
 </body></html>`;
 
-const CARD_HTML = `<div class="card"><div class="lbl">Total {BULAN}</div><div class="val">{TOTAL}</div><div class="sub">{COUNT} catatan</div></div>`;
-const CARD_TODAY = `<div class="card"><div class="lbl">Hari ini ({TGL})</div><div class="val">{TODAY}</div></div>`;
-const CARD_BUDGET = `<div class="card"><div class="lbl">Budget</div><div class="val {BUDGET_CLS}">{BUDGET}</div><div class="sub">Terpakai {SPENT}</div></div>`;
+const HERO = `<div class="hero"><div class="in">
+  <div class="hl">Total pengeluaran</div>
+  <div class="hv">{TOTAL}</div>
+  <div class="hs"><b>{COUNT}</b> catatan · hari ini <b>{TODAY}</b></div>
+</div></div>`;
+
+const CARD_HTML = `<div class="card"><div class="lbl">Hari ini ({TGL})</div><div class="val green">{TODAY}</div></div>`;
+const CARD_BUDGET = `<div class="card"><div class="lbl">Budget</div><div class="val {BUDGET_CLS}">{BUDGET}</div><div class="sub2">Terpakai {SPENT}</div></div>`;
 const CARD_SISA = `<div class="card"><div class="lbl">Sisa budget</div><div class="val {SISA_CLS}">{SISA}</div></div>`;
 
 function html(url, bulan, chatId, data) {
   const prev = prevBulan(bulan), next = nextBulan(bulan);
 
-  let cards = CARD_HTML.replace('{BULAN}', esc(fmtBulan(bulan)))
+  const hero = HERO
     .replace('{TOTAL}', 'Rp ' + nf(data.total))
     .replace('{COUNT}', String(data.count))
-    + CARD_TODAY.replace('{TGL}', esc(data.todayLabel.slice(5).replace('-', '/')))
-      .replace('{TODAY}', 'Rp ' + nf(data.today));
+    .replace('{TODAY}', 'Rp ' + nf(data.today));
+
+  let cards = CARD_HTML
+    .replace('{TGL}', esc(data.todayLabel.slice(5).replace('-', '/')))
+    .replace('{TODAY}', 'Rp ' + nf(data.today));
 
   if (data.budget !== null) {
     const sisa = data.budget - data.total;
@@ -338,7 +367,7 @@ function html(url, bulan, chatId, data) {
       + CARD_SISA.replace('{SISA}', (sisa >= 0 ? '' : '−Rp ') + nf(Math.abs(sisa)))
         .replace('{SISA_CLS}', sisa < 0 ? 'red' : 'green');
   } else {
-    cards += `<div class="card"><div class="lbl">Budget</div><div class="mut">Belum diset. Ketik /budget <nominal> di bot.</div></div>`;
+    cards += `<div class="card"><div class="lbl">Budget</div><div class="sub2">Belum diset. Ketik /budget <nominal> di bot.</div></div>`;
   }
 
   let catList = '';
@@ -355,15 +384,16 @@ function html(url, bulan, chatId, data) {
   });
 
   let table = data.recent.length ? '<table><thead><tr><th>Tanggal</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th></tr></thead><tbody>'
-    + data.recent.map((r) => `<tr><td class="mut">${esc(fmtTgl(r.tanggal))}</td><td>${esc(r.kategori)}</td><td class="mut">${esc(r.catatan || '')}</td><td style="text-align:right;font-weight:700">Rp ${nf(r.nominal)}</td></tr>`).join('')
+    + data.recent.map((r) => `<tr><td class="mut">${esc(fmtTgl(r.tanggal))}</td><td>${esc(r.kategori)}</td><td class="mut">${esc(r.catatan || '')}</td><td style="text-align:right;font-weight:700;color:#cea2f7">Rp ${nf(r.nominal)}</td></tr>`).join('')
     + '</tbody></table>'
     : `<div class="mut">Belum ada data bulan ini untuk kamu.</div>`;
 
   return new Response(LAYOUT
     .replace('{SUB}', esc(`Data pribadi · chat ${chatId}`))
-    .replace('{BULAN}', esc(fmtBulan(bulan)))
+    .split('{BULAN}').join(esc(fmtBulan(bulan)))
     .replace('{PREV}', prev)
     .replace('{NEXT}', next)
+    .replace('{HERO}', hero)
     .replace('{CARDS}', cards)
     .replace('{CATLIST}', catList)
     .replace('{TABLE}', table)
