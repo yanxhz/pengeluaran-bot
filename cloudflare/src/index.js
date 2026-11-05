@@ -1,4 +1,4 @@
-import { handleDashboard, handleAuth, handleLogout } from './dashboard.js';
+import { handleDashboard, handleCheckLogin, handleLogout } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -7,16 +7,16 @@ export default {
       if (url.pathname === '/' || url.pathname === '/dashboard') {
         return handleDashboard(request, env);
       }
-      if (url.pathname === '/auth') {
-        return handleAuth(request, env);
+      if (url.pathname === '/api/login/check') {
+        return handleCheckLogin(request, env);
       }
       if (url.pathname === '/logout') {
         return handleLogout();
       }
       return new Response('not found', { status: 404 });
     }
-    if (url.pathname === '/auth') {
-      return handleAuth(request, env);
+    if (url.pathname === '/api/login/check') {
+      return handleCheckLogin(request, env);
     }
     if (request.method !== 'POST' || url.pathname !== '/webhook') {
       return new Response('not found', { status: 404 });
@@ -198,6 +198,22 @@ async function handleUpdate(update, env) {
   if (!msg || !msg.text) return;
   const chatId = msg.chat.id;
   const text = msg.text.trim();
+
+  // ---- Login dashboard via kode deep-link (di_xxx) ----
+  // Diproses di sini (di luar gate registrasi nama) supaya user baru pun bisa login dulu.
+  const diM = text.match(/^\/start\s+(di_[0-9a-f]{8,16})$/i);
+  if (diM) {
+    const code = diM[1].replace(/^di_/, '');
+    await env.DB.prepare(
+      'CREATE TABLE IF NOT EXISTS login_req (code TEXT PRIMARY KEY, created INTEGER NOT NULL, chat_id INTEGER)'
+    ).run();
+    await env.DB.prepare('UPDATE login_req SET chat_id = ? WHERE code = ?').bind(chatId, code).run();
+    const regDi = await env.DB.prepare('SELECT nama FROM pengguna WHERE chat_id = ?').bind(chatId).first();
+    await sendMsg(env, chatId, regDi
+      ? '✅ Kode login diterima. Buka lagi halaman dashboard.'
+      : '✅ Kode diterima. Ketik nama kamu dulu ya (cth: Kael), buat daftar.');
+    return;
+  }
 
   // ---- Pendaftaran nama (sekali saja per chat) ----
   const reg = await env.DB.prepare('SELECT nama FROM pengguna WHERE chat_id = ?').bind(chatId).first();

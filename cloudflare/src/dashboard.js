@@ -1,7 +1,7 @@
 // Dashboard web multiuser untuk bot catatan pengeluaran.
-// Login via Telegram Login Widget (data-auth-url -> /auth). Server memverifikasi
-// tanda tangan HMAC-SHA256 pakai bot token (secret TELEGRAM_TOKEN), lalu mengeluarkan
-// cookie sesi per-user. Data difilter per chat_id (id Telegram user).
+// Login via deep-link kode: dashboard bikin kode, user klik link t.me/<bot>?start=di_<kode>,
+// bot mencatat chat_id untuk kode itu, dashboard polling dan mengeluarkan cookie sesi per-user.
+// (Tidak bergantung pada Telegram Login Widget / /setdomain — domain-independent.)
 
 const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -47,26 +47,12 @@ async function secretKey(env) {
   return _secret;
 }
 
-/* ---------- otentikasi Telegram ---------- */
+/* ---------- cookie sesi per-user ---------- */
 function getCookie(req, name) {
   const c = req.headers.get('cookie') || '';
   const m = c.split(';').map((s) => s.trim()).find((s) => s.startsWith(name + '='));
   return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
 }
-
-async function verifyTelegramAuth(data, keyBytes) {
-  if (!data || !data.hash || !data.id || !data.auth_date) return false;
-  const now = Math.floor(Date.now() / 1000);
-  if (now - Number(data.auth_date) > 86400) return false; // kedaluwarsa > 24 jam
-  const check = Object.keys(data)
-    .filter((k) => k !== 'hash' && data[k] !== undefined)
-    .sort()
-    .map((k) => `${k}=${data[k]}`)
-    .join('\n');
-  const sig = await hmacHex(keyBytes, check);
-  return sig === data.hash;
-}
-
 async function signUser(userId, keyBytes) {
   const aud = Math.floor(Date.now() / 1000) + 30 * 86400;
   const h = await hmacHex(keyBytes, `${userId}.${aud}`);
@@ -85,68 +71,78 @@ async function verifyUser(cookie, keyBytes) {
   return Number.isInteger(id) ? id : null;
 }
 
-let _botUser = null;
-async function getBotUsername(env) {
-  if (_botUser) return _botUser;
+/* ---------- tabel kode login ---------- */
+let _tbl = null;
+async function ensureLoginTable(env) {
+  if (_tbl) return true;
   try {
-    const r = await (await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/getMe`)).json();
-    _botUser = r.ok ? r.result.username : null;
-  } catch { _botUser = null; }
-  return _botUser;
+    await env.DB.prepare(
+      'CREATE TABLE IF NOT EXISTS login_req (code TEXT PRIMARY KEY, created INTEGER NOT NULL, chat_id INTEGER)'
+    ).run();
+    _tbl = true;
+    return true;
+  } catch { return false; }
+}
+function genCode() {
+  return [...crypto.getRandomValues(new Uint8Array(6))]
+    .map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+async function saveCode(env, code) {
+  await ensureLoginTable(env);
+  await env.DB.prepare(
+    'INSERT INTO login_req (code, created, chat_id) VALUES (?, ?, NULL) ON CONFLICT(code) DO UPDATE SET created = excluded.created'
+  ).bind(code, Date.now()).run();
+}
+async function takeCode(env, code) {
+  await ensureLoginTable(env);
+  const row = await env.DB.prepare(
+    'SELECT chat_id, created FROM login_req WHERE code = ?'
+  ).bind(code).first();
+  if (!row || !row.chat_id) return null;
+  if (Date.now() - Number(row.created) > 10 * 60 * 1000) return null; // > 10 mnt
+  return Number(row.chat_id);
 }
 
-export async function handleAuth(request, env) {
-  const url = new URL(request.url);
-  const keyBytes = await secretKey(env);
-  if (!keyBytes) {
-    return new Response('TELEGRAM_TOKEN belum diset', { status: 500 });
-  }
-  const data = {};
-  if (request.method === 'GET') {
-    url.searchParams.forEach((v, k) => { data[k] = v; });
-  } else {
-    try { Object.assign(data, await request.json()); } catch { /* js fallback */ }
-    url.searchParams.forEach((v, k) => { if (!(k in data)) data[k] = v; });
-  }
-  const ok = await verifyTelegramAuth(data, keyBytes);
-  if (!ok) {
-    return new Response('', { status: 302, headers: { Location: '/dashboard?err=login' } });
-  }
-  const cookie = await signUser(data.id, keyBytes);
-  return new Response('', {
-    status: 302,
-    headers: {
-      Location: '/dashboard',
-      'Set-Cookie': `dash_user=${cookie}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax`,
-    },
-  });
-}
-
-function loginPage(username, err) {
-  const widget = username
-    ? `<script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="${esc(username)}" data-size="large" data-auth-url="/auth" data-request-access="write"></script>`
-    : `<div class="mut">Bot username tidak ditemukan (cek secret TELEGRAM_TOKEN).</div>`;
-  const errHtml = err ? `<div class="err">Login gagal. Coba lagi.</div>` : '';
+/* ---------- halaman login (deep-link) ---------- */
+function loginPage(code, botUsername) {
+  const link = `https://t.me/${botUsername}?start=di_${code}`;
   const body = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Masuk — Catatan Pengeluaran</title>
 <style>
  body{font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#0f172a;color:#e2e8f0;
  display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
- .card{background:#1e293b;padding:36px;border-radius:16px;width:340px;box-shadow:0 10px 30px rgba(0,0,0,.4);text-align:center}
- h1{font-size:20px;margin:0 0 6px} p{color:#94a3b8;font-size:13px;margin:0 0 24px;line-height:1.5}
- .err{color:#f87171;font-size:13px;margin-bottom:14px}
+ .card{background:#1e293b;padding:36px;border-radius:16px;width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);text-align:center}
+ h1{font-size:20px;margin:0 0 6px} p{color:#94a3b8;font-size:13px;margin:0 0 22px;line-height:1.6}
+ .big{display:inline-block;background:#2aabee;color:#fff;font-weight:700;padding:13px 22px;border-radius:12px;
+ text-decoration:none;font-size:15px}
+ .big:hover{filter:brightness(1.08)}
+ .status{margin-top:16px;color:#94a3b8;font-size:13px}
+ .ok{color:#22c55e;font-weight:700}
  .mut{color:#94a3b8;font-size:13px}
 </style></head><body>
 <div class="card"><h1>🔒 Catatan Pengeluaran</h1>
-<p>Masuk pakai akun Telegram kamu untuk melihat dashboard pribadi.</p>
-${errHtml}
-${widget}
+<p>Klik tombol di bawah, buka di Telegram, lalu tekan <b>Start</b>. Setelah itu kembali ke halaman ini.</p>
+<a class="big" href="${link}" target="_blank">Masuk dengan Telegram</a>
+<div class="status" id="st">Menunggu kamu menekan Start di Telegram…</div>
 </div>
+<script>
+const CODE = ${JSON.stringify(code)};
+(function poll(){
+  fetch('/api/login/check?code='+CODE, {credentials:'same-origin'})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(j.ok){ document.getElementById('st').innerHTML='<span class="ok">✓ Berhasil. Mengarahkan…</span>'; setTimeout(function(){location.href='/dashboard';},600); }
+      else { setTimeout(poll,2000); }
+    })
+    .catch(function(){ setTimeout(poll,3000); });
+})();
+</script>
 </body></html>`;
   return new Response(body, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
+/* ---------- route ---------- */
 export async function handleDashboard(request, env) {
   const url = new URL(request.url);
   const keyBytes = await secretKey(env);
@@ -155,14 +151,45 @@ export async function handleDashboard(request, env) {
   }
   const uid = await verifyUser(getCookie(request, 'dash_user'), keyBytes);
   if (!uid) {
-    const un = await getBotUsername(env);
-    return loginPage(un, url.searchParams.get('err') === 'login');
+    const code = genCode();
+    await saveCode(env, code);
+    let un = 'kel_catatan_pengeluaran_bot';
+    try {
+      const r = await (await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/getMe`)).json();
+      if (r.ok && r.result.username) un = r.result.username;
+    } catch {}
+    return loginPage(code, un);
   }
   const bulan = /^\d{4}-\d{2}$/.test(url.searchParams.get('bulan') || '')
     ? url.searchParams.get('bulan')
     : bulanWIB();
   const data = await getMonthData(env, uid, bulan);
   return html(url, bulan, uid, data);
+}
+
+export async function handleCheckLogin(request, env) {
+  const url = new URL(request.url);
+  const keyBytes = await secretKey(env);
+  if (!keyBytes) return new Response('{}', { status: 500, headers: { 'content-type': 'application/json' } });
+  const code = url.searchParams.get('code') || '';
+  const chatId = await takeCode(env, code);
+  if (!chatId) {
+    return new Response('{"ok":false}', { headers: { 'content-type': 'application/json' } });
+  }
+  const cookie = await signUser(chatId, keyBytes);
+  return new Response('{"ok":true}', {
+    headers: {
+      'content-type': 'application/json',
+      'Set-Cookie': `dash_user=${cookie}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax`,
+    },
+  });
+}
+
+export async function handleLogout() {
+  return new Response('', {
+    status: 302,
+    headers: { Location: '/dashboard', 'Set-Cookie': 'dash_user=; Path=/; Max-Age=0; HttpOnly' },
+  });
 }
 
 async function getMonthData(env, chatId, bulan) {
@@ -344,13 +371,6 @@ function html(url, bulan, chatId, data) {
     .replace('{CATJSON}', JSON.stringify(data.perCat))
     .replace('{COLORSJSON}', JSON.stringify(catCol)),
     { headers: { 'content-type': 'text/html; charset=utf-8' } });
-}
-
-export async function handleLogout() {
-  return new Response('', {
-    status: 302,
-    headers: { Location: '/dashboard', 'Set-Cookie': 'dash_user=; Path=/; Max-Age=0; HttpOnly' },
-  });
 }
 
 function prevBulan(b) {
