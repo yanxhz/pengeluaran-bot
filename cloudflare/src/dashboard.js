@@ -431,7 +431,6 @@ const COLORS = ['#A020F0', '#7B2FF7', '#F87171', '#22C55E', '#F59E0B', '#38BDF8'
 const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dashboard Pengeluaran</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
  :root{--bg:#0C0B12;--card:#181622;--elev:#211E2D;--line:rgba(255,255,255,.07);--pline:rgba(160,32,240,.25);
   --tx:#F5F3FA;--mut:#9B96AA;--p:#A020F0;--p2:#7B2FF7;--inc:#22C55E;--exp:#F87171}
@@ -553,12 +552,12 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
           <div class="seg" id="segDay">
             <button data-r="7">7 hari</button><button data-r="30">30 hari</button><button data-r="0" class="on">Bulan ini</button>
           </div>
-          <div class="chartbox"><canvas id="daily"></canvas></div>
+          <div class="chartbox" id="daily">{DAILY_SVG}</div>
           <div class="budrow" style="margin-top:12px"><span class="mut">vs bulan lalu</span><b>{DELTA}</b></div>
         </div>
         <div class="panel">
           <h2>Kategori Pengeluaran</h2>
-          <canvas id="cat" height="180"></canvas>
+          <div id="cat" style="max-width:250px;margin:0 auto">{CAT_SVG}</div>
           <div style="margin-top:12px">{CATLIST}</div>
         </div>
       </div>
@@ -729,43 +728,53 @@ function exportCsv(){
 window.exportCsv=exportCsv;
 
 /* ---------- chart harian ---------- */
-let dailyChart, catChart;
-const tipStyle=()=>({backgroundColor:'#211E2D',borderColor:'rgba(160,32,240,.4)',borderWidth:1,titleColor:'#F5F3FA',bodyColor:'#C9C4D9',padding:10,cornerRadius:10});
+function svgDaily(expDays, incDays){
+  var W=760,H=230,padL=48,padB=28,padT=14,padR=12;
+  var plotW=W-padL-padR, plotH=H-padT-padB;
+  var days=[...new Set([...expDays.map(function(d){return d.d;}), ...incDays.map(function(d){return d.d;})])].sort();
+  var vals=days.map(function(d){var f=null; expDays.forEach(function(x){ if(x.d===d) f=x;}); return f? f.v:0;});
+  var incs=days.map(function(d){var f=null; incDays.forEach(function(x){ if(x.d===d) f=x;}); return f? f.v:0;});
+  var maxV=Math.max(1, Math.max.apply(null, vals.concat(incs)));
+  var n=days.length||1;
+  var step=plotW/n;
+  var bw=Math.max(2, Math.min(18, step*0.6));
+  var bars='', pts=[];
+  vals.forEach(function(v,i){ var x=padL+i*step+(step-bw)/2; var h=v/maxV*plotH; var y=padT+plotH-h;
+    bars += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="4" fill="url(#gExp)"><title>'+days[i]+' · Rp '+Number(v).toLocaleString('id-ID')+'</title></rect>';
+    pts.push((padL+i*step+step/2).toFixed(1)+','+(padT+plotH-incs[i]/maxV*plotH).toFixed(1));
+  });
+  var hasInc=false; incs.forEach(function(v){ if(v>0) hasInc=true; });
+  var incLine = hasInc ? '<polyline points="'+pts.join(' ')+'" fill="none" stroke="#22C55E" stroke-width="2" opacity=".85"/>' : '';
+  var gl='';
+  for(var g=0;g<=4;g++){ var gy=padT+plotH*g/4; var val=maxV*(1-g/4); gl += '<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="rgba(255,255,255,.06)"/><text x="'+(padL-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="10" fill="#9B96AA">'+(val>=1000? (val/1000)+'rb': Math.round(val))+'</text>'; }
+  var xl=''; var every=Math.ceil(n/12);
+  days.forEach(function(d,i){ if(i%every===0){ xl += '<text x="'+(padL+i*step+step/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="#9B96AA">'+d.slice(5)+'</text>'; } });
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img"><defs><linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F87171"/><stop offset="1" stop-color="rgba(248,113,113,.25)"/></linearGradient></defs>'+gl+bars+incLine+xl+'</svg>';
+}
+function svgCat(cats){
+  var total=0; cats.forEach(function(c){ total+=c.v; }); if(!total) total=1;
+  var R=62,C=100,circ=2*Math.PI*R;
+  var off=0, segs='';
+  cats.forEach(function(c,i){ var frac=c.v/total; var len=frac*circ;
+    segs += '<circle cx="'+C+'" cy="'+C+'" r="'+R+'" fill="none" stroke="'+COL[i%COL.length]+'" stroke-width="26" stroke-dasharray="'+len.toFixed(2)+' '+(circ-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+C+' '+C+')"><title>'+escH(c.k)+' · Rp '+Number(c.v).toLocaleString('id-ID')+' ('+Math.round(frac*100)+'%)</title></circle>';
+    off += len;
+  });
+  return '<svg viewBox="0 0 200 200" width="100%" style="max-width:220px" role="img">'+segs+'<text x="'+C+'" y="'+(C-2)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#F5F3FA">'+Number(total).toLocaleString('id-ID')+'</text><text x="'+C+'" y="'+(C+16)+'" text-anchor="middle" font-size="10" fill="#9B96AA">total bulan ini</text></svg>';
+}
 function drawCharts(){
   const r=document.querySelector('#segDay button.on');
   const range = r ? Number(r.dataset.r) : 0;
-  const dset={}; DAILY.forEach(d=>dset[d.d]=d.v);
-  const inSet={}; INC.forEach(d=>inSet[d.d]=d.v);
-  let days=[...new Set([...Object.keys(dset), ...Object.keys(inSet)])].sort();
-  if(range>0 && days.length>range){ days=days.slice(-range); }
-  const labels=days.map(d=>d.slice(5));
-  const vals=days.map(d=>dset[d]||0);
-  const incVals=days.map(d=>inSet[d]||0);
-  if(dailyChart) dailyChart.destroy();
-  dailyChart=new Chart(document.getElementById('daily'),{
-    type:'bar',
-    data:{ labels, datasets:[
-      {label:'Keluar', data:vals, borderRadius:8, backgroundColor:'rgba(248,113,113,.55)', borderColor:'rgba(248,113,113,.9)', borderWidth:1, barPercentage:0.55},
-      {type:'line', label:'Masuk', data:incVals, borderColor:'#22C55E', backgroundColor:'rgba(34,197,94,.12)', tension:.4, pointRadius:3, pointBackgroundColor:'#22C55E', fill:true}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#9B96AA',boxWidth:10,usePointStyle:true,padding:14,font:{size:12}}},
-        tooltip:{callbacks:{label:(c)=>{ const v=c.parsed && c.parsed.y!==undefined ? c.parsed.y : c.parsed; return c.dataset.label+': Rp '+Number(v||0).toLocaleString('id-ID'); }}, ...tipStyle()}},
-      scales:{x:{ticks:{color:'#9B96AA',maxRotation:0},grid:{display:false}},
-        y:{beginAtZero:true, ticks:{color:'#9B96AA', callback:(v)=> v>=1000 ? (v/1000)+'rb' : v}, grid:{color:'rgba(255,255,255,.05)'}}}}
-  });
-  if(catChart) catChart.destroy();
-  const tot=CATS.reduce((a,b)=>a+b.v,0)||1;
-  catChart=new Chart(document.getElementById('cat'),{
-    type:'doughnut',
-    data:{labels:CATS.map(c=>c.k),datasets:[{data:CATS.map(c=>c.v),backgroundColor:COL.slice(0,CATS.length),borderColor:'#181622',borderWidth:3,hoverOffset:8}]},
-    options:{cutout:'62%',plugins:{legend:{position:'bottom',align:'center',labels:{color:'#9B96AA',boxWidth:10,usePointStyle:true,padding:14,font:{size:12}}},
-      tooltip:{callbacks:{label:(c)=>{ const v=c.parsed||0; return ' '+c.label+': Rp '+Number(v).toLocaleString('id-ID')+' ('+Math.round(v/tot*100)+'%)'; }}, ...tipStyle()}}}
-  });
+  let expDays=DAILY, incDays=INC;
+  if(range>0){ expDays=[...DAILY].slice(-range); incDays=[...INC].slice(-range); }
+  const el=document.getElementById('daily'); if(el) el.innerHTML=svgDaily(expDays, incDays);
+  const ec=document.getElementById('cat'); if(ec) ec.innerHTML=svgCat(CATS);
 }
 document.querySelectorAll('#segDay button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#segDay button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on'); drawCharts();
+});
+drawCharts();
+drawCharts();
 });
 drawCharts();
 
@@ -799,6 +808,39 @@ window.saveBudget=saveBudget;
 </script>
 </body></html>`;
 
+function svgDailyServer(expDays, incDays){
+  var W=760,H=230,padL=48,padB=28,padT=14,padR=12;
+  var plotW=W-padL-padR, plotH=H-padT-padB;
+  var days=[...new Set([...expDays.map(function(d){return d.d;}), ...incDays.map(function(d){return d.d;})])].sort();
+  var vals=days.map(function(d){var f=null; expDays.forEach(function(x){ if(x.d===d) f=x;}); return f? f.v:0;});
+  var incs=days.map(function(d){var f=null; incDays.forEach(function(x){ if(x.d===d) f=x;}); return f? f.v:0;});
+  var maxV=Math.max(1, Math.max.apply(null, vals.concat(incs)));
+  var n=days.length||1;
+  var step=plotW/n;
+  var bw=Math.max(2, Math.min(18, step*0.6));
+  var bars='', pts=[];
+  vals.forEach(function(v,i){ var x=padL+i*step+(step-bw)/2; var h=v/maxV*plotH; var y=padT+plotH-h;
+    bars += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="4" fill="url(#gExp)"><title>'+esc(days[i])+' · Rp '+nf(v)+'</title></rect>';
+    pts.push((padL+i*step+step/2).toFixed(1)+','+(padT+plotH-incs[i]/maxV*plotH).toFixed(1));
+  });
+  var hasInc=false; incs.forEach(function(v){ if(v>0) hasInc=true; });
+  var incLine = hasInc ? '<polyline points="'+pts.join(' ')+'" fill="none" stroke="#22C55E" stroke-width="2" opacity=".85"/>' : '';
+  var gl='';
+  for(var g=0;g<=4;g++){ var gy=padT+plotH*g/4; var val=maxV*(1-g/4); gl += '<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="rgba(255,255,255,.06)"/><text x="'+(padL-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="10" fill="#9B96AA">'+(val>=1000? (val/1000)+'rb': Math.round(val))+'</text>'; }
+  var xl=''; var every=Math.ceil(n/12);
+  days.forEach(function(d,i){ if(i%every===0){ xl += '<text x="'+(padL+i*step+step/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="#9B96AA">'+esc(d.slice(5))+'</text>'; } });
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img"><defs><linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F87171"/><stop offset="1" stop-color="rgba(248,113,113,.25)"/></linearGradient></defs>'+gl+bars+incLine+xl+'</svg>';
+}
+function svgCatServer(cats){
+  var total=0; cats.forEach(function(c){ total+=c.v; }); if(!total) total=1;
+  var R=62,C=100,circ=2*Math.PI*R;
+  var off=0, segs='';
+  cats.forEach(function(c,i){ var frac=c.v/total; var len=frac*circ;
+    segs += '<circle cx="'+C+'" cy="'+C+'" r="'+R+'" fill="none" stroke="'+COLORS[i%COLORS.length]+'" stroke-width="26" stroke-dasharray="'+len.toFixed(2)+' '+(circ-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+C+' '+C+')"><title>'+esc(c.k)+' · Rp '+nf(c.v)+' ('+Math.round(frac*100)+'%)</title></circle>';
+    off += len;
+  });
+  return '<svg viewBox="0 0 200 200" width="100%" style="max-width:220px" role="img">'+segs+'<text x="'+C+'" y="'+(C-2)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#F5F3FA">'+nf(total)+'</text><text x="'+C+'" y="'+(C+16)+'" text-anchor="middle" font-size="10" fill="#9B96AA">total bulan ini</text></svg>';
+}
 function html(url, bulan, chatId, d) {
   const prev = prevBulan(bulan), next = nextBulan(bulan);
   const rp = (n) => 'Rp ' + nf(n);
@@ -894,6 +936,8 @@ function html(url, bulan, chatId, d) {
     .split('{DAILYJSON}').join(JSON.stringify(d.dayExpArr))
     .split('{INCOMEJSON}').join(JSON.stringify(d.dayIncArr))
     .split('{CATJSON}').join(JSON.stringify(catData))
-    .split('{COLORSJSON}').join(JSON.stringify(COLORS)),
+    .split('{COLORSJSON}').join(JSON.stringify(COLORS))
+    .split('{DAILY_SVG}').join(svgDailyServer(d.dayExpArr, d.dayIncArr))
+    .split('{CAT_SVG}').join(svgCatServer(catData)),
     { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
