@@ -238,53 +238,6 @@ export async function handleAdd(request, env) {
   return jsonOk();
 }
 
-export async function handleEdit(request, env) {
-  const a = await authUser(request, env);
-  if (a.err) return jsonErr(a.err, a.err === 401 ? 'auth' : '');
-  let b = {};
-  try { b = await request.json(); } catch { return jsonErr(400, 'bad'); }
-  const id = parseInt(b.id, 10);
-  if (!Number.isInteger(id)) return jsonErr(400, 'bad');
-  const sets = []; const vals = [];
-  if (b.nominal !== undefined) {
-    const n = parseInt(String(b.nominal).replace(/[^\d]/g, ''), 10);
-    if (!Number.isInteger(n) || n <= 0) return jsonErr(400, 'invalid');
-    sets.push('nominal=?'); vals.push(n);
-  }
-  if (b.kategori !== undefined) {
-    const k = String(b.kategori).trim().toLowerCase().slice(0, 40);
-    if (!k) return jsonErr(400, 'invalid');
-    sets.push('kategori=?'); vals.push(k);
-  }
-  if (b.catatan !== undefined) {
-    sets.push('catatan=?'); vals.push(String(b.catatan).trim().slice(0, 120));
-  }
-  if (b.tipe !== undefined) {
-    const tp = b.tipe === 'masuk' ? 'masuk' : 'keluar';
-    sets.push('tipe=?'); vals.push(tp);
-  }
-  if (b.tanggal !== undefined) {
-    const t = String(b.tanggal);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return jsonErr(400, 'invalid');
-    sets.push('tanggal=?'); vals.push(t);
-  }
-  if (!sets.length) return jsonErr(400, 'bad');
-  vals.push(id, a.chatId);
-  await env.DB.prepare(`UPDATE pengeluaran SET ${sets.join(', ')} WHERE id=? AND chat_id=?`).bind(...vals).run();
-  return jsonOk();
-}
-
-export async function handleDelete(request, env) {
-  const a = await authUser(request, env);
-  if (a.err) return jsonErr(a.err, a.err === 401 ? 'auth' : '');
-  let b = {};
-  try { b = await request.json(); } catch { return jsonErr(400, 'bad'); }
-  const id = parseInt(b.id, 10);
-  if (!Number.isInteger(id)) return jsonErr(400, 'bad');
-  await env.DB.prepare('DELETE FROM pengeluaran WHERE id=? AND chat_id=?').bind(id, a.chatId).run();
-  return jsonOk();
-}
-
 export async function handleBudget(request, env) {
   const a = await authUser(request, env);
   if (a.err) return jsonErr(a.err, a.err === 401 ? 'auth' : '');
@@ -643,7 +596,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
         </div>
         <table><thead><tr>
           <th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th>
-          <th style="text-align:right">Nominal</th><th style="text-align:right">Aksi</th>
+          <th style="text-align:right">Nominal</th>
         </tr></thead><tbody id="txbody">{TROWS}</tbody></table>
         <div class="empty hidden" id="txempty">Tidak ada transaksi yang cocok.</div>
       </div>
@@ -738,8 +691,7 @@ function filtList(){
 function rowHtml(x){
   const chip=x.tp==='masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
   const cls=x.tp==='masuk' ? 'amt inc' : 'amt';
-  const act='<button class="btn small" onclick="editTx('+x.id+')">Edit</button> <button class="btn small danger" onclick="delTx('+x.id+')">Hapus</button>';
-  return '<tr><td class="mut">'+escH(x.t.slice(5).replace('-','/'))+'</td><td>'+chip+'</td><td>'+escH(x.k)+'</td><td class="mut">'+escH(x.c)+'</td><td class="'+cls+'">'+fmtRp(x.v)+'</td><td style="text-align:right">'+act+'</td></tr>';
+  return '<tr><td class="mut">'+escH(x.t.slice(5).replace('-','/'))+'</td><td>'+chip+'</td><td>'+escH(x.k)+'</td><td class="mut">'+escH(x.c)+'</td><td class="'+cls+'">'+fmtRp(x.v)+'</td></tr>';
 }
 function renderTx(){ const list=filtList(); document.getElementById('txbody').innerHTML=list.map(rowHtml).join(''); document.getElementById('txempty').classList.toggle('hidden', list.length>0); }
 function renderDashTx(){
@@ -778,6 +730,7 @@ window.exportCsv=exportCsv;
 
 /* ---------- chart harian ---------- */
 let dailyChart, catChart;
+const tipStyle=()=>({backgroundColor:'#211E2D',borderColor:'rgba(160,32,240,.4)',borderWidth:1,titleColor:'#F5F3FA',bodyColor:'#C9C4D9',padding:10,cornerRadius:10});
 function drawCharts(){
   const r=document.querySelector('#segDay button.on');
   const range = r ? Number(r.dataset.r) : 0;
@@ -790,20 +743,24 @@ function drawCharts(){
   const incVals=days.map(d=>inSet[d]||0);
   if(dailyChart) dailyChart.destroy();
   dailyChart=new Chart(document.getElementById('daily'),{
+    type:'bar',
     data:{ labels, datasets:[
-      {type:'bar',label:'Keluar',data:vals,backgroundColor:'#F87171',borderRadius:6,barPercentage:0.6},
-      {type:'line',label:'Masuk',data:incVals,borderColor:'#22C55E',backgroundColor:'#22C55E',tension:.35,pointRadius:3}
+      {label:'Keluar', data:vals, borderRadius:8, backgroundColor:'rgba(248,113,113,.55)', borderColor:'rgba(248,113,113,.9)', borderWidth:1, barPercentage:0.55},
+      {type:'line', label:'Masuk', data:incVals, borderColor:'#22C55E', backgroundColor:'rgba(34,197,94,.12)', tension:.4, pointRadius:3, pointBackgroundColor:'#22C55E', fill:true}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#9B96AA',boxWidth:10,font:{size:12}}}},
+      plugins:{legend:{labels:{color:'#9B96AA',boxWidth:10,usePointStyle:true,padding:14,font:{size:12}}},
+        tooltip:{callbacks:{label:(c)=>{ const v=c.parsed && c.parsed.y!==undefined ? c.parsed.y : c.parsed; return c.dataset.label+': Rp '+Number(v||0).toLocaleString('id-ID'); }}, ...tipStyle()}},
       scales:{x:{ticks:{color:'#9B96AA',maxRotation:0},grid:{display:false}},
-        y:{beginAtZero:true,ticks:{color:'#9B96AA'},grid:{color:'rgba(255,255,255,.05)'}}}}
+        y:{beginAtZero:true, ticks:{color:'#9B96AA', callback:(v)=> v>=1000 ? (v/1000)+'rb' : v}, grid:{color:'rgba(255,255,255,.05)'}}}}
   });
   if(catChart) catChart.destroy();
+  const tot=CATS.reduce((a,b)=>a+b.v,0)||1;
   catChart=new Chart(document.getElementById('cat'),{
     type:'doughnut',
-    data:{labels:CATS.map(c=>c.k),datasets:[{data:CATS.map(c=>c.v),backgroundColor:COL.slice(0,CATS.length),borderColor:'#181622',borderWidth:2}]},
-    options:{plugins:{legend:{position:'bottom',labels:{color:'#9B96AA',boxWidth:10,font:{size:12}}}}}
+    data:{labels:CATS.map(c=>c.k),datasets:[{data:CATS.map(c=>c.v),backgroundColor:COL.slice(0,CATS.length),borderColor:'#181622',borderWidth:3,hoverOffset:8}]},
+    options:{cutout:'62%',plugins:{legend:{position:'bottom',align:'center',labels:{color:'#9B96AA',boxWidth:10,usePointStyle:true,padding:14,font:{size:12}}},
+      tooltip:{callbacks:{label:(c)=>{ const v=c.parsed||0; return ' '+c.label+': Rp '+Number(v).toLocaleString('id-ID')+' ('+Math.round(v/tot*100)+'%)'; }}, ...tipStyle()}}}
   });
 }
 document.querySelectorAll('#segDay button').forEach(b=>b.onclick=()=>{
@@ -813,7 +770,7 @@ document.querySelectorAll('#segDay button').forEach(b=>b.onclick=()=>{
 drawCharts();
 
 /* ---------- quick add / edit ---------- */
-let qType='keluar', editId=null;
+let qType='keluar';
 document.querySelectorAll('#segAdd button').forEach(b=>b.onclick=()=>{ qType=b.dataset.tp; document.querySelectorAll('#segAdd button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
 function openAdd(){
   editId=null; qType='keluar';
@@ -823,31 +780,14 @@ function openAdd(){
   document.getElementById('qDate').value=''; document.getElementById('qCat').value='';
   document.getElementById('ovAdd').classList.add('open');
 }
-function openEdit(id){
-  const x=TX.find(t=>t.id===id); if(!x) return;
-  editId=id; qType=x.tp;
-  document.getElementById('addTitle').textContent='Edit transaksi #'+id;
-  document.querySelectorAll('#segAdd button').forEach(b=>b.classList.toggle('on', b.dataset.tp===x.tp));
-  document.getElementById('qNom').value=x.v; document.getElementById('qKat').value=x.k;
-  document.getElementById('qDate').value=x.t; document.getElementById('qCat').value=x.c;
-  document.getElementById('ovAdd').classList.add('open');
-}
 function closeAdd(){ document.getElementById('ovAdd').classList.remove('open'); }
 function qSave(){
   const body={tipe:qType, nominal:document.getElementById('qNom').value, kategori:document.getElementById('qKat').value, catatan:document.getElementById('qCat').value, tanggal:document.getElementById('qDate').value};
-  const url = editId ? '/api/edit' : '/api/add';
-  if(editId) body.id=editId;
-  fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+  fetch('/api/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
     .then(r=>r.json()).then(j=>{ if(j.ok) location.reload(); else alert('Gagal menyimpan.'); });
 }
 document.getElementById('qSave').onclick=qSave;
-window.openAdd=openAdd; window.openEdit=openEdit; window.closeAdd=closeAdd;
-function delTx(id){
-  if(!confirm('Hapus transaksi ini?')) return;
-  fetch('/api/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id})})
-    .then(r=>r.json()).then(j=>{ if(j.ok) location.reload(); else alert('Gagal menghapus.'); });
-}
-window.delTx=delTx; window.editTx=openEdit;
+window.openAdd=openAdd; window.closeAdd=closeAdd;
 
 /* ---------- budget ---------- */
 function saveBudget(){
@@ -923,8 +863,7 @@ function html(url, bulan, chatId, d) {
   const tRows = d.tx.map((x) => {
     const chip = x.tp === 'masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
     const cls = x.tp === 'masuk' ? 'amt inc' : 'amt';
-    const act = '<button class="btn small" onclick="editTx(' + x.id + ')">Edit</button> <button class="btn small danger" onclick="delTx(' + x.id + ')">Hapus</button>';
-    return `<tr><td class="mut">${esc(x.t.slice(5).replace('-', '/'))}</td><td>${chip}</td><td>${esc(x.k)}</td><td class="mut">${esc(x.c)}</td><td class="${cls}">Rp ${nf(x.v)}</td><td style="text-align:right">${act}</td></tr>`;
+    return `<tr><td class="mut">${esc(x.t.slice(5).replace('-', '/'))}</td><td>${chip}</td><td>${esc(x.k)}</td><td class="mut">${esc(x.c)}</td><td class="${cls}">Rp ${nf(x.v)}</td></tr>`;
   }).join('');
   const catOptions = d.catArr.map((c) => `<option value="${esc(c.k)}">`).join('');
   const catS = d.catArr.map((c) => `<option value="${esc(c.k)}">`).join('');
