@@ -197,7 +197,9 @@ export async function handleDashboard(request, env) {
   if (url.searchParams.get('view') === 'tahun') {
     return renderYear(url, uid, String(tahun), yd);
   }
-  return html(url, bulan, uid, d);
+  const nrow = await env.DB.prepare('SELECT nama FROM pengguna WHERE chat_id=?').bind(uid).first();
+  const uname = nrow && nrow.nama ? String(nrow.nama) : String(uid);
+  return html(url, bulan, uid, d, uname);
 }
 
 export async function handleCheckLogin(request, env) {
@@ -221,36 +223,6 @@ async function authUser(request, env) {
 }
 const jsonErr = (st, e) => new Response(JSON.stringify({ ok: false, err: e }), { status: st, headers: { 'content-type': 'application/json' } });
 const jsonOk = (obj = {}) => new Response(JSON.stringify({ ok: true, ...obj }), { headers: { 'content-type': 'application/json' } });
-
-export async function handleAdd(request, env) {
-  const a = await authUser(request, env);
-  if (a.err) return jsonErr(a.err, a.err === 401 ? 'auth' : '');
-  let b = {};
-  try { b = await request.json(); } catch { return jsonErr(400, 'bad'); }
-  const nominal = parseInt(String(b.nominal || '').replace(/[^\d]/g, ''), 10);
-  const tipe = b.tipe === 'masuk' ? 'masuk' : 'keluar';
-  const kategori = String(b.kategori || '').trim().toLowerCase().slice(0, 40);
-  if (!Number.isInteger(nominal) || nominal <= 0 || !kategori) return jsonErr(400, 'invalid');
-  const tanggal = b.tanggal && /^\d{4}-\d{2}-\d{2}$/.test(String(b.tanggal)) ? String(b.tanggal) : monthWIB();
-  const catatan = String(b.catatan || '').trim().slice(0, 120);
-  await env.DB.prepare('INSERT INTO pengeluaran (chat_id, tanggal, kategori, nominal, catatan, tipe) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(a.chatId, tanggal, kategori, nominal, catatan, tipe).run();
-  return jsonOk();
-}
-
-export async function handleBudget(request, env) {
-  const a = await authUser(request, env);
-  if (a.err) return jsonErr(a.err, a.err === 401 ? 'auth' : '');
-  let b = {};
-  try { b = await request.json(); } catch { return jsonErr(400, 'bad'); }
-  const nominal = parseInt(String(b.nominal || '').replace(/[^\d]/g, ''), 10);
-  if (!Number.isInteger(nominal) || nominal < 0) return jsonErr(400, 'invalid');
-  const bulan = bulanWIB();
-  await env.DB.prepare(
-    'INSERT INTO budget (chat_id, bulan, nominal) VALUES (?, ?, ?) ON CONFLICT(chat_id, bulan) DO UPDATE SET nominal = excluded.nominal'
-  ).bind(a.chatId, bulan, nominal).run();
-  return jsonOk();
-}
 
 export async function handleLogout() {
   return new Response('', {
@@ -517,12 +489,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
   <aside class="side">
     <div class="brand">💰 <span>Catatan Pengeluaran</span></div>
     <button class="nv active" data-v="dash">📊 Dashboard</button>
-    <button class="nv" data-v="tx">🧾 Transaksi</button>
-    <button class="nv" data-v="cat">📂 Kategori</button>
-    <button class="nv" data-v="bud">💰 Budget</button>
-    <button class="nv" data-v="set">⚙️ Settings</button>
     <a class="nv" href="?view=tahun">📅 Rekap Tahunan</a>
-    <div class="side-foot">chat {CHAT}</div>
+    <div class="side-foot">{NAME}</div>
   </aside>
 
   <main class="main">
@@ -537,7 +505,6 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
             <span style="font-weight:700">{BULAN}</span>
             <a class="btn" href="?bulan={NEXT}">→</a>
           </div>
-          <button class="btn primary" onclick="openAdd()">＋ Tambah</button>
         </div>
       </div>
       <div class="cards">
@@ -564,92 +531,15 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
       <div class="panel">
         <div class="hdr" style="margin-bottom:8px">
           <h2>Transaksi Terbaru</h2>
-          <button class="btn small" onclick="goView('tx')">Lihat semua →</button>
         </div>
-        <div class="filters">
-          <input class="inp" type="text" id="dq" placeholder="Cari kategori / catatan…">
-          <select class="inp" id="dc"><option value="">Semua kategori</option>{CATOPTIONS}</select>
-          <select class="inp" id="dt"><option value="">Semua jenis</option><option value="keluar">Keluar</option><option value="masuk">Masuk</option></select>
-        </div>
-        <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th></tr></thead><tbody id="dxbody">{TROWS}</tbody></table>
-        <div class="empty hidden" id="dxempty">Tidak ada transaksi bulan ini.</div>
-      </div>
-    </section>
-
-    <!-- ============ TRANSAKSI ============ -->
-    <section id="v-tx" class="view">
-      <div class="hdr">
-        <div><h1>🧾 Transaksi</h1><div class="sub">{BULAN} · {COUNT} catatan</div></div>
-        <div class="actions">
-          <button class="btn" onclick="exportCsv()">⬇ CSV</button>
-          <button class="btn primary" onclick="openAdd()">＋ Tambah</button>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="filters">
-          <input class="inp" type="text" id="fq" placeholder="Cari kategori / catatan…">
-          <select class="inp" id="fc"><option value="">Semua kategori</option>{CATOPTIONS}</select>
-          <select class="inp" id="ft"><option value="">Semua jenis</option><option value="keluar">Keluar</option><option value="masuk">Masuk</option></select>
-          <input class="inp" type="date" id="fd1"><input class="inp" type="date" id="fd2">
-          <button class="btn small" onclick="resetF()">Reset</button>
-        </div>
-        <table><thead><tr>
-          <th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th>
-          <th style="text-align:right">Nominal</th>
-        </tr></thead><tbody id="txbody">{TROWS}</tbody></table>
-        <div class="empty hidden" id="txempty">Tidak ada transaksi yang cocok.</div>
-      </div>
-    </section>
-
-    <!-- ============ KATEGORI ============ -->
-    <section id="v-cat" class="view">
-      <div class="hdr"><div><h1>📂 Kategori</h1><div class="sub">Analisa pengeluaran · {BULAN}</div></div></div>
-      <div class="panel">{CATROWS}</div>
-    </section>
-
-    <!-- ============ BUDGET ============ -->
-    <section id="v-bud" class="view">
-      <div class="hdr"><div><h1>💰 Budget Bulanan</h1><div class="sub">{BULAN}</div></div></div>
-      <div class="panel bud" style="max-width:560px">
-        {BUDGET_BODY}
-        <div class="field" style="margin-top:18px">
-          <label>Set budget bulan ini (Rp)</label>
-          <div class="row">
-            <input class="inp" type="number" id="budIn" min="0" placeholder="contoh: 1000000" style="flex:1">
-            <button class="btn primary" onclick="saveBudget()">Simpan</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ SETTINGS ============ -->
-    <section id="v-set" class="view">
-      <div class="hdr"><div><h1>⚙️ Settings</h1></div></div>
-      <div class="panel" style="max-width:560px">
-        <div class="field"><label>Akun (chat ID)</label><div class="mut">{CHAT}</div></div>
-        <div class="field"><label>Rekap Tahunan</label><div><a class="btn" href="?view=tahun">Buka Rekap Tahunan</a></div></div>
-        <div class="field" style="margin-top:18px"><button class="btn danger" onclick="location.href='/logout'">Keluar</button></div>
+        <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th></tr></thead><tbody>{TROWS}</tbody></table>
+        <div class="empty {DXEMPTY_CLS}" id="dxempty">Tidak ada transaksi bulan ini.</div>
       </div>
     </section>
 
   </main>
 </div>
 
-<!-- quick add / edit modal -->
-<div class="ov" id="ovAdd"><div class="modal">
-  <h3 id="addTitle">Tambah transaksi</h3>
-  <div class="seg" id="segAdd">
-    <button type="button" data-tp="keluar" class="on">Keluar</button>
-    <button type="button" data-tp="masuk">Masuk</button>
-  </div>
-  <div class="field" style="margin-top:12px"><label>Nominal (Rp)</label><input class="inp" type="number" id="qNom" min="1" placeholder="50000" style="width:100%"></div>
-  <div class="field"><label>Kategori</label><input class="inp" id="qKat" list="cats" placeholder="makan" style="width:100%"></div>
-  <datalist id="cats">{CATS}</datalist>
-  <div class="field"><label>Tanggal (opsional)</label><input class="inp" type="date" id="qDate" style="width:100%"></div>
-  <div class="field"><label>Catatan (opsional)</label><input class="inp" id="qCat" placeholder="nasi padang" style="width:100%"></div>
-  <button class="btn primary cbtn" id="qSave">Simpan</button>
-  <button class="btn cbtn" onclick="closeAdd()">Batal</button>
-</div></div>
 
 <script>
 const TX = {TXJSON};
@@ -676,55 +566,6 @@ function escH(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 function fmtRp(n){return 'Rp '+Number(n).toLocaleString('id-ID');}
 
 /* ---------- transaksi: filter + render ---------- */
-const st={q:'',c:'',t:'',d1:'',d2:''};
-function filtList(){
-  return TX.filter(x=>{
-    if(st.q && !(x.k+' '+x.c).toLowerCase().includes(st.q)) return false;
-    if(st.c && x.k!==st.c) return false;
-    if(st.t && x.tp!==st.t) return false;
-    if(st.d1 && x.t<st.d1) return false;
-    if(st.d2 && x.t>st.d2) return false;
-    return true;
-  });
-}
-function rowHtml(x){
-  const chip=x.tp==='masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
-  const cls=x.tp==='masuk' ? 'amt inc' : 'amt';
-  return '<tr><td class="mut">'+escH(x.t.slice(5).replace('-','/'))+'</td><td>'+chip+'</td><td>'+escH(x.k)+'</td><td class="mut">'+escH(x.c)+'</td><td class="'+cls+'">'+fmtRp(x.v)+'</td></tr>';
-}
-function renderTx(){ const list=filtList(); document.getElementById('txbody').innerHTML=list.map(rowHtml).join(''); document.getElementById('txempty').classList.toggle('hidden', list.length>0); }
-function renderDashTx(){
-  const list=filtList().slice(0,20);
-  document.getElementById('dxbody').innerHTML=list.map(x=>{
-    const chip=x.tp==='masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
-    const cls=x.tp==='masuk' ? 'amt inc' : 'amt';
-    return '<tr><td class="mut">'+escH(x.t.slice(5).replace('-','/'))+'</td><td>'+chip+'</td><td>'+escH(x.k)+'</td><td class="mut">'+escH(x.c)+'</td><td class="'+cls+'">'+fmtRp(x.v)+'</td></tr>';
-  }).join('');
-  document.getElementById('dxempty').classList.toggle('hidden', list.length>0);
-}
-document.getElementById('fq').oninput=e=>{st.q=e.target.value.toLowerCase();renderTx();};
-document.getElementById('fc').onchange=e=>{st.c=e.target.value;renderTx();};
-document.getElementById('ft').onchange=e=>{st.t=e.target.value;renderTx();};
-document.getElementById('fd1').onchange=e=>{st.d1=e.target.value;renderTx();};
-document.getElementById('fd2').onchange=e=>{st.d2=e.target.value;renderTx();};
-document.getElementById('dq').oninput=e=>{st.q=e.target.value.toLowerCase();renderDashTx();};
-document.getElementById('dc').onchange=e=>{st.c=e.target.value;renderDashTx();};
-document.getElementById('dt').onchange=e=>{st.t=e.target.value;renderDashTx();};
-function resetF(){st.q=st.c=st.t=st.d1=st.d2='';document.getElementById('fq').value='';document.getElementById('fc').value='';document.getElementById('ft').value='';document.getElementById('fd1').value='';document.getElementById('fd2').value='';renderTx();}
-window.resetF=resetF;
-renderTx(); renderDashTx();
-
-/* ---------- CSV export ---------- */
-function exportCsv(){
-  const rows=[['tanggal','jenis','kategori','catatan','nominal']];
-  const list = document.getElementById('v-tx').classList.contains('active') ? filtList() : TX;
-  list.forEach(x=>rows.push([x.t, x.tp, x.k, x.c, x.v]));
-  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='pengeluaran_'+OV.bulan.replace(/ /g,'_')+'.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-}
 window.exportCsv=exportCsv;
 
 /* ---------- chart harian ---------- */
@@ -778,32 +619,6 @@ drawCharts();
 });
 drawCharts();
 
-/* ---------- quick add / edit ---------- */
-let qType='keluar';
-document.querySelectorAll('#segAdd button').forEach(b=>b.onclick=()=>{ qType=b.dataset.tp; document.querySelectorAll('#segAdd button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
-function openAdd(){
-  editId=null; qType='keluar';
-  document.getElementById('addTitle').textContent='Tambah transaksi';
-  document.querySelectorAll('#segAdd button').forEach(x=>x.classList.toggle('on', x.dataset.tp==='keluar'));
-  document.getElementById('qNom').value=''; document.getElementById('qKat').value='';
-  document.getElementById('qDate').value=''; document.getElementById('qCat').value='';
-  document.getElementById('ovAdd').classList.add('open');
-}
-function closeAdd(){ document.getElementById('ovAdd').classList.remove('open'); }
-function qSave(){
-  const body={tipe:qType, nominal:document.getElementById('qNom').value, kategori:document.getElementById('qKat').value, catatan:document.getElementById('qCat').value, tanggal:document.getElementById('qDate').value};
-  fetch('/api/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
-    .then(r=>r.json()).then(j=>{ if(j.ok) location.reload(); else alert('Gagal menyimpan.'); });
-}
-document.getElementById('qSave').onclick=qSave;
-window.openAdd=openAdd; window.closeAdd=closeAdd;
-
-/* ---------- budget ---------- */
-function saveBudget(){
-  const n=document.getElementById('budIn').value;
-  fetch('/api/budget',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({nominal:n})})
-    .then(r=>r.json()).then(j=>{ if(j.ok) location.reload(); else alert('Gagal set budget.'); });
-}
 window.saveBudget=saveBudget;
 </script>
 </body></html>`;
@@ -841,7 +656,7 @@ function svgCatServer(cats){
   });
   return '<svg viewBox="0 0 200 200" width="100%" style="max-width:220px" role="img">'+segs+'<text x="'+C+'" y="'+(C-2)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#F5F3FA">'+nf(total)+'</text><text x="'+C+'" y="'+(C+16)+'" text-anchor="middle" font-size="10" fill="#9B96AA">total bulan ini</text></svg>';
 }
-function html(url, bulan, chatId, d) {
+function html(url, bulan, chatId, d, uname) {
   const prev = prevBulan(bulan), next = nextBulan(bulan);
   const rp = (n) => 'Rp ' + nf(n);
   const remainCls = d.remainBudget === null ? 'p' : (d.remainBudget >= 0 ? 'inc' : 'exp');
@@ -902,7 +717,7 @@ function html(url, bulan, chatId, d) {
     count: d.txCount, income: d.incomeTotal, delta: d.expDelta };
   const catData = d.catArr.map((c) => ({ k: c.k, v: c.v }));
 
-  const tRows = d.tx.map((x) => {
+  const tRows = d.tx.slice(0, 10).map((x) => {
     const chip = x.tp === 'masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
     const cls = x.tp === 'masuk' ? 'amt inc' : 'amt';
     return `<tr><td class="mut">${esc(x.t.slice(5).replace('-', '/'))}</td><td>${chip}</td><td>${esc(x.k)}</td><td class="mut">${esc(x.c)}</td><td class="${cls}">Rp ${nf(x.v)}</td></tr>`;
@@ -911,7 +726,7 @@ function html(url, bulan, chatId, d) {
   const catS = d.catArr.map((c) => `<option value="${esc(c.k)}">`).join('');
 
   return new Response(LAYOUT
-    .split('{CHAT}').join(String(chatId))
+    .split('{NAME}').join(esc(uname))
     .split('{GREET}').join(esc(greetingWIB()))
     .split('{DATE}').join(esc(todayLabelWIB()))
     .split('{BULAN}').join(esc(fmtBulan(bulan)))
@@ -931,6 +746,7 @@ function html(url, bulan, chatId, d) {
     .split('{CATOPTIONS}').join(catOptions)
     .split('{CATS}').join(catS)
     .split('{TROWS}').join(tRows)
+    .split('{DXEMPTY_CLS}').join(d.tx.length ? 'hidden' : '')
     .split('{TXJSON}').join(JSON.stringify(d.tx))
     .split('{OVJSON}').join(JSON.stringify(ov))
     .split('{DAILYJSON}').join(JSON.stringify(d.dayExpArr))
