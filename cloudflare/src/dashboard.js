@@ -177,7 +177,10 @@ export async function handleDashboard(request, env) {
   const bulan = /^\d{4}-\d{2}$/.test(url.searchParams.get('bulan') || '')
     ? url.searchParams.get('bulan') : bulanWIB();
   const d = await getMonthData(env, uid, bulan);
-  return html(url, bulan, uid, d);
+  let tahun = parseInt(url.searchParams.get('tahun'), 10);
+  if (!tahun || tahun < 2000 || tahun > 2100) tahun = yearWIB();
+  const yd = await getYearData(env, uid, String(tahun));
+  return html(url, bulan, uid, d, String(tahun), yd);
 }
 
 export async function handleCheckLogin(request, env) {
@@ -282,6 +285,29 @@ async function getMonthData(env, chatId, bulan) {
 }
 
 /* ---------- template ---------- */
+function yearWIB() { return wibNow().getUTCFullYear(); }
+function prevYear(y) { return y - 1; }
+function nextYear(y) { return y + 1; }
+
+async function getYearData(env, chatId, year) {
+  const like = year + '-%';
+  const rows = await env.DB.prepare(
+    "SELECT substr(tanggal,1,7) AS bln, COALESCE(SUM(CASE WHEN tipe='masuk' THEN nominal ELSE 0 END),0) AS inc, COALESCE(SUM(CASE WHEN tipe='keluar' THEN nominal ELSE 0 END),0) AS exp FROM pengeluaran WHERE chat_id=? AND substr(tanggal,1,7) LIKE ? GROUP BY bln ORDER BY bln")
+    .bind(chatId, like).all();
+  const map = {};
+  (rows.results || []).forEach((r) => { map[r.bln] = { inc: Number(r.inc), exp: Number(r.exp) }; });
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const months = [];
+  let totInc = 0, totExp = 0;
+  for (let i = 0; i < 12; i++) {
+    const bln = `${year}-${String(i + 1).padStart(2, '0')}`;
+    const m = map[bln] || { inc: 0, exp: 0 };
+    totInc += m.inc; totExp += m.exp;
+    months.push({ label: MONTHS[i], bln, inc: m.inc, exp: m.exp });
+  }
+  return { months, totInc, totExp, year };
+}
+
 const COLORS = ['#A020F0', '#7B2FF7', '#F87171', '#22C55E', '#F59E0B', '#38BDF8',
   '#EC4899', '#8B5CF6', '#FACC15', '#2DD4BF', '#FB923C', '#A78BFA'];
 
@@ -445,6 +471,22 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
     <button class="btn primary cbtn" id="qSave">Simpan</button>
     <button class="btn cbtn" style="margin-top:8px" onclick="closeAdd()">Batal</button>
   </div>
+<div class="panel" style="margin-top:14px">
+  <h2>📅 Rekap Tahunan · {YEAR}</h2>
+  <div class="actions" style="margin-bottom:8px">
+    <a class="btn" href="?tahun={YPREV}">← {YPREV}</a>
+    <span style="font-weight:700">{YEAR}</span>
+    <a class="btn" href="?tahun={YNEXT}">{YNEXT} →</a>
+  </div>
+  <div class="cards" style="margin:8px 0">
+    <div class="card"><div class="lbl">Pengeluaran {YEAR}</div><div class="val exp">{YTOTEXP}</div></div>
+    <div class="card"><div class="lbl">Pemasukan {YEAR}</div><div class="val inc">{YTOTINC}</div></div>
+    <div class="card"><div class="lbl">Selisih</div><div class="val {YNET_CLS}">{YNET}</div></div>
+    <div class="card"><div class="lbl">Rata2 keluar/bulan</div><div class="val exp">{YAVG}</div></div>
+  </div>
+  <canvas id="year" height="110"></canvas>
+  <table style="margin-top:12px"><thead><tr><th>Bulan</th><th style="text-align:right">Masuk</th><th style="text-align:right">Keluar</th><th style="text-align:right">Net</th></tr></thead><tbody>{YROWS}</tbody></table>
+</div>
 </div>
 
 <script>
@@ -453,6 +495,7 @@ const CATS = {CATJSON};
 const COL = {COLORSJSON};
 const TOMORROW = {TOMORROW};
 const T0 = {T0};
+const YEARS = {YEARJSON};
 
 // chart harian: batang pengeluaran + garis pemasukan
 const DAILY = [DAILYJSON];
@@ -519,11 +562,21 @@ document.getElementById('qSave').onclick=async()=>{
   if(j.ok) location.reload(); else alert('Gagal menyimpan.');
 };
 window.openAdd=openAdd; window.closeAdd=closeAdd;
+new Chart(document.getElementById('year'), {
+  data:{ labels: YEARS.map(m=>m.label),
+    datasets:[
+      { type:'bar', label:'Keluar', data: YEARS.map(m=>m.exp), backgroundColor:'#F87171', borderRadius:6, barPercentage:0.7 },
+      { type:'line', label:'Masuk', data: YEARS.map(m=>m.inc), borderColor:'#22C55E', backgroundColor:'#22C55E', tension:.35, pointRadius:3 }
+    ]},
+  options:{ plugins:{legend:{labels:{color:'#9B96AA',boxWidth:10,font:{size:12}}}}, scales:{
+    x:{ticks:{color:'#9B96AA'},grid:{display:false}},
+    y:{beginAtZero:true,ticks:{color:'#9B96AA'},grid:{color:'rgba(255,255,255,.05)'}} }}
+});
 </script>
 </body></html>`;
 
 /* ---------- render ---------- */
-function html(url, bulan, chatId, d) {
+function html(url, bulan, chatId, d, tahun, yd) {
   const prev = prevBulan(bulan), next = nextBulan(bulan);
   const rp = (n) => 'Rp ' + nf(n);
 
@@ -581,6 +634,14 @@ function html(url, bulan, chatId, d) {
   const txEmptyStyle = d.tx.length ? 'display:none' : '';
   const t0 = bulan + '-01';
   const tomorrow = '2099-12-31';
+  const yrRows = yd.months.map((m) => {
+    const net = m.inc - m.exp;
+    const cls = net >= 0 ? 'amt inc' : 'amt exp';
+    return `<tr><td>${esc(m.label)} ${yd.year}</td><td class="amt inc">Rp ${nf(m.inc)}</td><td class="amt exp">Rp ${nf(m.exp)}</td><td class="${cls}">Rp ${nf(net)}</td></tr>`;
+  }).join('');
+  const yNet = yd.totInc - yd.totExp;
+  const yNetCls = yNet >= 0 ? 'inc' : 'exp';
+  const yAvg = Math.round(yd.totExp / 12);
 
   return new Response(LAYOUT
     .split('{GREET}').join(esc(greetingWIB()))
@@ -617,7 +678,17 @@ function html(url, bulan, chatId, d) {
     .split('{DAILYJSON}').join(JSON.stringify(d.dayExpArr))
     .split('{INCOMEJSON}').join(JSON.stringify(d.dayIncArr))
     .split('{T0}').join(t0)
-    .split('{TOMORROW}').join(tomorrow),
+    .split('{TOMORROW}').join(tomorrow)
+    .split('{YEAR}').join(String(yd.year))
+    .split('{YPREV}').join(String(prevYear(yd.year)))
+    .split('{YNEXT}').join(String(nextYear(yd.year)))
+    .split('{YTOTEXP}').join(rp(yd.totExp))
+    .split('{YTOTINC}').join(rp(yd.totInc))
+    .split('{YNET}').join(rp(yNet))
+    .split('{YNET_CLS}').join(yNetCls)
+    .split('{YAVG}').join(rp(yAvg))
+    .split('{YROWS}').join(yrRows)
+    .split('{YEARJSON}').join(JSON.stringify(yd.months)),
     { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
