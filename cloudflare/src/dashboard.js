@@ -423,8 +423,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
     <select class="inp" id="ft"><option value="">Semua jenis</option><option value="keluar">Keluar</option><option value="masuk">Masuk</option></select>
     <input class="inp" type="date" id="fd1"><input class="inp" type="date" id="fd2">
   </div>
-  <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th></tr></thead><tbody id="txbody"></tbody></table>
-  <div class="empty" id="txempty">Tidak ada transaksi bulan ini.</div>
+  <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th></tr></thead><tbody id="txbody">{TROWS}</tbody></table>
+  <div class="empty" id="txempty" style="{TXEMPTY_STYLE}">Tidak ada transaksi bulan ini.</div>
 </div>
 
 </div>
@@ -572,6 +572,13 @@ function html(url, bulan, chatId, d) {
   // tx / categories for select/datalist
   const catOptions = d.catArr.map((c) => `<option value="${esc(c.k)}">`).join('');
   const catS = d.catArr.map((c) => `<option value="${esc(c.k)}">`).join('');
+  let rowsHtml = '';
+  d.tx.forEach((x) => {
+    const chip = x.tp === 'masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
+    const cls = x.tp === 'masuk' ? 'amt inc' : 'amt';
+    rowsHtml += `<tr><td class="mut">${esc(x.t.slice(5).replace('-', '/'))}</td><td>${chip}</td><td>${esc(x.k)}</td><td class="mut">${esc(x.c)}</td><td class="${cls}">Rp ${nf(x.v)}</td></tr>`;
+  });
+  const txEmptyStyle = d.tx.length ? 'display:none' : '';
   const t0 = bulan + '-01';
   const tomorrow = '2099-12-31';
 
@@ -602,6 +609,8 @@ function html(url, bulan, chatId, d) {
     .split('{BUDGET_BODY}').join(budgetBody)
     .split('{CATOPTIONS}').join(catOptions)
     .split('{CATS}').join(catS)
+    .split('{TROWS}').join(rowsHtml)
+    .split('{TXEMPTY_STYLE}').join(txEmptyStyle)
     .split('{TXJSON}').join(JSON.stringify(d.tx))
     .split('{CATJSON}').join(JSON.stringify(d.catArr.map((c) => ({ k: c.k, v: c.v }))))
     .split('{COLORSJSON}').join(JSON.stringify(catCol))
