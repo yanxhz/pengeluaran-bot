@@ -180,6 +180,9 @@ export async function handleDashboard(request, env) {
   let tahun = parseInt(url.searchParams.get('tahun'), 10);
   if (!tahun || tahun < 2000 || tahun > 2100) tahun = yearWIB();
   const yd = await getYearData(env, uid, String(tahun));
+  if (url.searchParams.get('view') === 'tahun') {
+    return renderYear(url, uid, String(tahun), yd);
+  }
   return html(url, bulan, uid, d, String(tahun), yd);
 }
 
@@ -399,6 +402,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
     <div class="month">
       <a class="btn" href="?bulan={PREV}">←</a><span>{BULAN}</span><a class="btn" href="?bulan={NEXT}">→</a>
     </div>
+    <a class="btn" href="?view=tahun">📅 Rekap Tahunan</a>
     <button class="btn primary" onclick="openAdd()">＋ Tambah</button>
     <a class="logout" href="/logout">Keluar</a>
   </div>
@@ -576,6 +580,78 @@ new Chart(document.getElementById('year'), {
 </body></html>`;
 
 /* ---------- render ---------- */
+const YEAR_PAGE = `<!doctype html><html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rekap Tahunan · {YEAR}</title>
+<style>
+ :root{--bg:#0C0B12;--card:#181622;--line:rgba(255,255,255,.07);--pline:rgba(160,32,240,.25);
+  --tx:#F5F3FA;--mut:#9B96AA;--exp:#F87171;--inc:#22C55E}
+ *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;
+  background:radial-gradient(1200px 520px at 75% -12%, rgba(160,32,240,.14), transparent 60%), var(--bg);color:var(--tx)}
+ .wrap{max-width:1100px;margin:0 auto;padding:26px 18px 80px}
+ header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+ h1{font-size:21px;margin:0} .sub{color:var(--mut);font-size:13px;margin-top:3px}
+ .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+ .btn{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 14px;border-radius:12px;
+  text-decoration:none;font-size:13.5px;font-weight:600}
+ .btn:hover{border-color:#A020F0;color:#fff}
+ .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+ .card .lbl{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:1px}
+ .card .val{font-size:23px;font-weight:800;margin-top:8px}
+ .card .val.exp{color:var(--exp)} .card .val.inc{color:var(--inc)}
+ .mo{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+ .m{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+ .m .nm{font-weight:700;font-size:14px}
+ .m .amt{font-size:20px;font-weight:800;margin-top:6px;color:var(--exp)}
+ .m .small{color:var(--mut);font-size:12px;margin-top:3px}
+ .m.top{border-color:#A020F0;box-shadow:0 0 0 1px rgba(160,32,240,.25)}
+ @media (max-width:560px){.mo{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<div class="wrap">
+<header>
+  <div><h1>📅 Rekap Tahunan</h1><div class="sub">Detail pengeluaran per bulan · {YEAR}</div></div>
+  <div class="actions">
+    <a class="btn" href="?view=tahun&tahun={YPREV}">← {YPREV}</a>
+    <span style="font-weight:700">{YEAR}</span>
+    <a class="btn" href="?view=tahun&tahun={YNEXT}">{YNEXT} →</a>
+    <a class="btn" href="/dashboard">← Dashboard Bulanan</a>
+  </div>
+</header>
+<div class="cards">
+  <div class="card"><div class="lbl">Total pengeluaran</div><div class="val exp">{YTOTEXP}</div></div>
+  <div class="card"><div class="lbl">Total pemasukan</div><div class="val inc">{YTOTINC}</div></div>
+  <div class="card"><div class="lbl">Rata2 / bulan</div><div class="val exp">{YAVG}</div></div>
+  <div class="card"><div class="lbl">Bulan tertinggi</div><div class="val exp">{YMAX}</div><div class="mut">{YMAXLBL}</div></div>
+</div>
+<div class="mo">{MONTHS}</div>
+</div>
+</body></html>`;
+
+function renderYear(url, chatId, tahun, yd) {
+  const prev = String(prevYear(Number(tahun)));
+  const next = String(nextYear(Number(tahun)));
+  let maxM = null;
+  yd.months.forEach((m) => { if (!maxM || m.exp > maxM.exp) maxM = m; });
+  const monthsHtml = yd.months.map((m) => {
+    const net = m.inc - m.exp;
+    const top = maxM && maxM.bln === m.bln ? ' top' : '';
+    return `<div class="m${top}"><div class="nm">${esc(m.label)} ${tahun}</div>` +
+      `<div class="amt">Rp ${nf(m.exp)}</div>` +
+      `<div class="small">masuk Rp ${nf(m.inc)} · net Rp ${nf(net)}</div></div>`;
+  }).join('');
+  return new Response(YEAR_PAGE
+    .split('{YEAR}').join(esc(tahun))
+    .split('{YPREV}').join(prev)
+    .split('{YNEXT}').join(next)
+    .split('{YTOTEXP}').join('Rp ' + nf(yd.totExp))
+    .split('{YTOTINC}').join('Rp ' + nf(yd.totInc))
+    .split('{YAVG}').join('Rp ' + nf(Math.round(yd.totExp / 12)))
+    .split('{YMAX}').join(maxM ? 'Rp ' + nf(maxM.exp) : '—')
+    .split('{YMAXLBL}').join(maxM ? esc(maxM.label) + ' ' + tahun : '')
+    .split('{MONTHS}').join(monthsHtml),
+    { headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
 function html(url, bulan, chatId, d, tahun, yd) {
   const prev = prevBulan(bulan), next = nextBulan(bulan);
   const rp = (n) => 'Rp ' + nf(n);
