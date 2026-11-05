@@ -130,6 +130,9 @@ const HELP =
   '  /hapus — hapus catatan (pilih nomor)\n' +
   '  /edit — ubah catatan (pilih nomor)\n' +
   '  /hapus_semua — hapus SEMUA (dengan konfirmasi)\n\n' +
+  '📊 Dashboard web:\n' +
+  '  Buka https://pengeluaran-bot.pengeluaran-bot.workers.dev/dashboard\n' +
+  '  Login pakai Telegram — lihat grafik & rekap pengeluaran kamu\n\n' +
   '  /bantuan — tampilkan bantuan ini';
 
 /* ---------- menu interaktif (10 catatan terakhir) ---------- */
