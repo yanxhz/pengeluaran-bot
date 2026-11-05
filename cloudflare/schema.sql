@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS pengeluaran (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  chat_id INTEGER NOT NULL DEFAULT 0,
+  tanggal TEXT NOT NULL,
+  kategori TEXT NOT NULL,
+  nominal INTEGER NOT NULL,
+  catatan TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS state (
+  chat_id INTEGER PRIMARY KEY,
+  pending INTEGER DEFAULT 0,
+  target_id INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS budget (
+  chat_id INTEGER NOT NULL,
+  bulan TEXT NOT NULL,
+  nominal INTEGER NOT NULL,
+  PRIMARY KEY (chat_id, bulan)
+);
+
+CREATE TABLE IF NOT EXISTS pengguna (
+  chat_id INTEGER PRIMARY KEY,
+  nama TEXT NOT NULL
+);

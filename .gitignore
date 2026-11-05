@@ -1,0 +1,20 @@
+# Secret / kredensial (jangan pernah di-commit)
+.env
+*dash_pass
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Database lokal (sumber kebenaran = D1 remote)
+*.db
+*.db-journal
+
+# Cloudflare local state
+cloudflare/.wrangler/
+cloudflare/login.out
+cloudflare/.dev.vars
+
+# Node
+node_modules/

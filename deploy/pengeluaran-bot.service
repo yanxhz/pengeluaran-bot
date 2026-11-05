@@ -1,0 +1,15 @@
+[Unit]
+Description=Bot Telegram Pengeluaran
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/pengeluaran-bot
+ExecStart=/opt/pengeluaran-bot/venv/bin/python /opt/pengeluaran-bot/start_bot.py
+Restart=always
+RestartSec=5
+EnvironmentFile=/opt/pengeluaran-bot/.env
+
+[Install]
+WantedBy=multi-user.target

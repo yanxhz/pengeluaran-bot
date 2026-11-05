@@ -1,0 +1,14 @@
+name = "pengeluaran-bot"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+workers_dev = true
+account_id = "d20eba7769b60e492cebff100e69dec1"
+
+# Token bot: set via secret (lebih aman):
+#   wrangler secret put TELEGRAM_TOKEN
+# (kode baca env.TELEGRAM_TOKEN)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pengeluaran"
+database_id = "bed9771d-d0d1-4588-9a52-a0740c90ef73"
