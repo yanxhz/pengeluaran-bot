@@ -230,7 +230,7 @@ async function toggleReg(){
     const w = document.getElementById('wrapUn'); if(w) w.remove();
     document.getElementById('u').placeholder = '';
   }
-  document.getElementById('p').placeholder = regMode ? 'password (min 4 karakter)' : '';
+  document.getElementById('p').placeholder = regMode ? 'password (min 8 karakter)' : '';
 }
 async function submitReg(){
   const un = document.getElementById('un');
@@ -239,7 +239,7 @@ async function submitReg(){
   const password = document.getElementById('p').value;
   if(!nama){ err('Isi nama.'); return; }
   if(!username){ err('Isi username.'); return; }
-  if(password.length < 4){ err('Password minimal 4 karakter.'); return; }
+  if(password.length < 8){ err('Password minimal 8 karakter.'); return; }
   const { status, j } = await api('/api/web/register', { nama, username, password });
   if(status === 200){ location.href = '/dashboard'; }
   else { err(j.err || 'Gagal daftar.'); }
@@ -345,7 +345,7 @@ export async function handleWebRegister(request, env) {
   const password = String(body.password || '');
   if (!nama) return jsonErr(400, 'Nama wajib diisi.');
   if (!username) return jsonErr(400, 'Username harus 3-30 karakter (huruf/angka/./_).');
-  if (password.length < 4) return jsonErr(400, 'Password minimal 4 karakter.');
+  if (password.length < 8) return jsonErr(400, 'Password minimal 8 karakter.');
   const dup = await env.DB.prepare('SELECT id FROM web_users WHERE username = ?').bind(username).first();
   if (dup) return jsonErr(409, 'Username sudah dipakai.');
   const salt = galSalt();
@@ -390,6 +390,12 @@ async function ensureLoginAttempts(env) {
     'CREATE TABLE IF NOT EXISTS login_att (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, t INTEGER NOT NULL)'
   ).run();
 }
+async function ensureKatPref(env) {
+  await env.DB.prepare(
+    'CREATE TABLE IF NOT EXISTS kat_pref (chat_id INTEGER NOT NULL, kategori TEXT NOT NULL, tipe TEXT NOT NULL, PRIMARY KEY (chat_id, kategori))'
+  ).run();
+}
+const DEFAULT_NEEDS = new Set(['makan', 'transport', 'tagihan', 'kesehatan', 'belanja']);
 export async function handleAddTx(request, env) {
   const keyBytes = await secretKey(env);
   if (!keyBytes) return jsonErr(500, 'Auth tidak tersedia.');
@@ -473,6 +479,29 @@ export async function handleRenameKategori(request, env) {
   const res = await env.DB.prepare('UPDATE pengeluaran SET kategori = ? WHERE chat_id = ? AND kategori = ?')
     .bind(baru, uid, lama).run();
   return jsonOk({ changes: res.meta.changes ?? 0 });
+}
+export async function handleDeleteAll(request, env) {
+  const uid = await authUid(request, env);
+  if (!uid) return jsonErr(401, 'Belum masuk.');
+  let body;
+  try { body = await request.json(); } catch { return jsonErr(400, 'Body tidak valid'); }
+  if (body.confirm !== 'HAPUS SEMUA') return jsonErr(400, 'Konfirmasi salah.');
+  const res = await env.DB.prepare('DELETE FROM pengeluaran WHERE chat_id = ?').bind(uid).run();
+  return jsonOk({ changes: res.meta.changes ?? 0 });
+}
+export async function handleSetKategoriTipe(request, env) {
+  const uid = await authUid(request, env);
+  if (!uid) return jsonErr(401, 'Belum masuk.');
+  await ensureKatPref(env);
+  let body;
+  try { body = await request.json(); } catch { return jsonErr(400, 'Body tidak valid'); }
+  const kategori = String(body.kategori || '').trim().toLowerCase().slice(0, 50);
+  const tipe = String(body.tipe || '');
+  if (!kategori) return jsonErr(400, 'Kategori wajib diisi.');
+  if (tipe !== 'kebutuhan' && tipe !== 'keinginan') return jsonErr(400, 'Tipe harus kebutuhan atau keinginan.');
+  await env.DB.prepare('INSERT INTO kat_pref (chat_id, kategori, tipe) VALUES (?, ?, ?) ON CONFLICT(chat_id, kategori) DO UPDATE SET tipe = excluded.tipe')
+    .bind(uid, kategori, tipe).run();
+  return jsonOk();
 }
 export async function handleGetTxAll(request, env) {
   const uid = await authUid(request, env);
@@ -585,7 +614,8 @@ export async function handleLogout() {
 /* ---------- data (semua nyata) ---------- */
 async function getMonthData(env, chatId, bulan) {
   const prev = prevBulan(bulan);
-  const [bal, mExp, mInc, budget, dayExp, dayInc, catL, catPrev, recent, prevM, maxTx, today, txc, incCat, trend] = await Promise.all([
+  await ensureKatPref(env);
+  const [bal, mExp, mInc, budget, dayExp, dayInc, catL, catPrev, recent, prevM, maxTx, today, txc, incCat, trend, pref] = await Promise.all([
     env.DB.prepare(
       "SELECT COALESCE(SUM(CASE WHEN tipe='masuk' THEN nominal ELSE 0 END),0) AS inc, COALESCE(SUM(CASE WHEN tipe='keluar' THEN nominal ELSE 0 END),0) AS exp FROM pengeluaran WHERE chat_id = ?")
       .bind(chatId).first(),
@@ -616,6 +646,7 @@ async function getMonthData(env, chatId, bulan) {
       .bind(chatId, bulan).all(),
     env.DB.prepare("SELECT substr(tanggal,1,7) AS bln, COALESCE(SUM(CASE WHEN tipe='masuk' THEN nominal ELSE 0 END),0) AS inc, COALESCE(SUM(CASE WHEN tipe='keluar' THEN nominal ELSE 0 END),0) AS exp FROM pengeluaran WHERE chat_id=? AND tanggal >= ? GROUP BY bln ORDER BY bln")
       .bind(chatId, prevBulan(prevBulan(prevBulan(bulan))) + '-01').all(),
+    env.DB.prepare('SELECT kategori, tipe FROM kat_pref WHERE chat_id = ?').bind(chatId).all(),
   ]);
 
   const expenseTotal = Number(mExp ? mExp.total : 0);
@@ -670,11 +701,13 @@ async function getMonthData(env, chatId, bulan) {
   const monthNet = incomeTotal - expenseTotal;
   const saveRate = incomeTotal > 0 ? Math.round((monthNet / incomeTotal) * 100) : null;
 
-  // kebutuhan vs keinginan
-  const NEEDS = new Set(['makan', 'transport', 'tagihan', 'kesehatan', 'belanja']);
+  // kebutuhan vs keinginan (pakai preferensi user, fallback ke default)
+  const prefMap = {};
+  (pref.results || []).forEach((r) => { prefMap[r.kategori] = r.tipe; });
   let needsTotal = 0, wantsTotal = 0;
   for (const c of catArr) {
-    if (NEEDS.has(c.k)) needsTotal += c.v; else wantsTotal += c.v;
+    const tipe = prefMap[c.k] || (DEFAULT_NEEDS.has(c.k) ? 'kebutuhan' : 'keinginan');
+    if (tipe === 'kebutuhan') needsTotal += c.v; else wantsTotal += c.v;
   }
 
   // insight (dibuat sebagai array string)
@@ -709,7 +742,7 @@ async function getMonthData(env, chatId, bulan) {
     balance, incomeTotal, expenseTotal, expenseCount: Number(mExp ? mExp.n : 0), todayExp, txCount,
     budgetNom, remainBudget, dayExpArr, dayIncArr, catArr, catPrevMap, tx,
     prevExp, prevInc, avgDaily, maxDay, topCat, maxTxRow, estEnd, expDelta, incDelta, dim,
-    incArr, trendArr, monthNet, saveRate, needsTotal, wantsTotal, insights,
+    incArr, trendArr, monthNet, saveRate, needsTotal, wantsTotal, insights, prefMap,
   };
 }
 
@@ -1042,6 +1075,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
         </select>
         <span class="mut" id="txCount"></span>
         <button class="btn small" style="margin-left:auto" onclick="openKat()">Atur Kategori</button>
+        <button class="btn small danger" onclick="openDelAll()">Hapus Semua</button>
       </div>
       <div class="panel">
         <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th><th style="text-align:right">Aksi</th></tr></thead><tbody id="txRows"></tbody></table>
@@ -1124,22 +1158,47 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 <div class="ov" id="ovKat">
   <div class="modal">
     <h3>Atur Kategori</h3>
-    <div class="mut" style="margin-bottom:10px;font-size:13px">Gabungkan/rename kategori. Semua transaksi dengan kategori itu ikut berubah.</div>
-    <div class="field"><label>Kategori yang mau diubah</label>
-      <select id="katLama" class="inp"></select>
+    <div class="mut" style="margin-bottom:10px;font-size:13px">Gabungkan/rename kategori, atau tandai apakah itu kebutuhan/keinginan.</div>
+    <div class="field"><label>Kategori</label>
+      <select id="katPilih" class="inp" onchange="katPilihChanged()"></select>
     </div>
-    <div class="field"><label>Jadi kategori</label>
+    <div class="field"><label>Rename / gabung jadi</label>
       <input id="katBaru" class="inp" style="width:100%" placeholder="cth: makanan">
     </div>
+    <div class="field"><label>Tipe</label>
+      <div class="row">
+        <button class="btn" id="katNeedBtn" style="flex:1" onclick="katSetTipe('kebutuhan')">Kebutuhan</button>
+        <button class="btn" id="katWantBtn" style="flex:1" onclick="katSetTipe('keinginan')">Keinginan</button>
+      </div>
+    </div>
     <div class="err" id="katerr" style="color:var(--exp);font-size:13px;min-height:18px"></div>
-    <button class="btn primary cbtn" onclick="saveKat()">Simpan</button>
-    <button class="btn cbtn" style="margin-top:8px" onclick="closeKat()">Batal</button>
+    <button class="btn primary cbtn" onclick="saveKat()">Simpan rename</button>
+    <button class="btn cbtn" style="margin-top:8px" onclick="closeKat()">Tutup</button>
+  </div>
+</div>
+
+<!-- modal hapus semua -->
+<div class="ov" id="ovDelAll">
+  <div class="modal">
+    <h3>⚠️ Hapus SEMUA transaksi</h3>
+    <div class="mut" style="margin-bottom:12px;font-size:13px;line-height:1.6">
+      Ini akan menghapus <b>semua</b> catatan pengeluaran & pemasukan kamu. Tindakan ini tidak bisa dibatalkan.
+      Backup dulu lewat tombol 🗄 Backup kalau masih mau menyimpan datanya.
+    </div>
+    <div class="field"><label>Ketik <b>HAPUS SEMUA</b> untuk konfirmasi</label>
+      <input id="delallIn" class="inp" style="width:100%" placeholder="HAPUS SEMUA" autocomplete="off">
+    </div>
+    <div class="err" id="delallerr" style="color:var(--exp);font-size:13px;min-height:18px"></div>
+    <button class="btn danger cbtn" onclick="doDelAll()">Hapus semua data</button>
+    <button class="btn cbtn" style="margin-top:8px" onclick="closeDelAll()">Batal</button>
   </div>
 </div>
 
 
 <script>
 const TX = {TXJSON};
+const KATPREF = {KATPREF_JSON};
+const DEFAULT_NEEDS = new Set(['makan','transport','tagihan','kesehatan','belanja']);
 const OV = {OVJSON};
 const DAILY = {DAILYJSON};
 const INC = {INCOMEJSON};
@@ -1369,24 +1428,49 @@ window.filterTx = filterTx;
 window.loadTxAll = loadTxAll;
 
 /* ---------- atur kategori ---------- */
+let KAT_CURRENT = '';
+function katPilihChanged(){
+  KAT_CURRENT = document.getElementById('katPilih').value;
+  document.getElementById('katBaru').value = KAT_CURRENT;
+  const tipe = KAT_CURRENT ? (KATPREF[KAT_CURRENT] || (DEFAULT_NEEDS.has(KAT_CURRENT) ? 'kebutuhan' : 'keinginan')) : '';
+  updateKatTipeUI(tipe);
+}
+function updateKatTipeUI(tipe){
+  const nb = document.getElementById('katNeedBtn');
+  const wb = document.getElementById('katWantBtn');
+  nb.classList.remove('primary'); wb.classList.remove('primary');
+  if(tipe === 'kebutuhan') nb.classList.add('primary');
+  else if(tipe === 'keinginan') wb.classList.add('primary');
+}
 function openKat(){
-  const sel = document.getElementById('katLama');
+  const sel = document.getElementById('katPilih');
   const cats = [];
   for(const x of TXDATA){ if(x.tipe==='keluar' && cats.indexOf(x.kategori)<0) cats.push(x.kategori); }
   cats.sort();
   sel.innerHTML = cats.map(c=>'<option value="'+escH(c)+'">'+escH(c)+'</option>').join('');
-  document.getElementById('katBaru').value = '';
   document.getElementById('katerr').textContent = '';
   document.getElementById('ovKat').classList.add('open');
+  if(cats.length){ sel.value = cats[0]; katPilihChanged(); }
+  else updateKatTipeUI('');
 }
 function closeKat(){ document.getElementById('ovKat').classList.remove('open'); }
 window.openKat = openKat; window.closeKat = closeKat;
+async function katSetTipe(tipe){
+  if(!KAT_CURRENT){ document.getElementById('katerr').textContent = 'Pilih kategori dulu.'; return; }
+  try {
+    const r = await fetch('/api/kategori/tipe', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ kategori: KAT_CURRENT, tipe }), credentials:'same-origin' });
+    const j = await r.json().catch(()=>({}));
+    if(r.status === 200){ updateKatTipeUI(tipe); document.getElementById('katerr').textContent = 'Tersimpan.'; }
+    else { document.getElementById('katerr').textContent = j.err || 'Gagal.'; }
+  } catch { document.getElementById('katerr').textContent = 'Gagal menghubungi server.'; }
+}
 async function saveKat(){
-  const lama = document.getElementById('katLama').value;
+  const lama = KAT_CURRENT;
   const baru = document.getElementById('katBaru').value.trim().toLowerCase();
   const err = document.getElementById('katerr');
   if(!lama){ err.textContent = 'Pilih kategori dulu.'; return; }
   if(!baru){ err.textContent = 'Isi nama kategori baru.'; return; }
+  if(lama === baru){ closeKat(); return; }
   try {
     const r = await fetch('/api/kategori/rename', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ lama, baru }), credentials:'same-origin' });
     const j = await r.json().catch(()=>({}));
@@ -1395,6 +1479,27 @@ async function saveKat(){
   } catch { err.textContent = 'Gagal menghubungi server.'; }
 }
 window.saveKat = saveKat;
+
+/* ---------- hapus semua ---------- */
+function openDelAll(){
+  document.getElementById('delallIn').value = '';
+  document.getElementById('delallerr').textContent = '';
+  document.getElementById('ovDelAll').classList.add('open');
+}
+function closeDelAll(){ document.getElementById('ovDelAll').classList.remove('open'); }
+window.openDelAll = openDelAll; window.closeDelAll = closeDelAll;
+async function doDelAll(){
+  const v = document.getElementById('delallIn').value.trim();
+  const err = document.getElementById('delallerr');
+  if(v !== 'HAPUS SEMUA'){ err.textContent = 'Ketik HAPUS SEMUA untuk konfirmasi.'; return; }
+  try {
+    const r = await fetch('/api/tx/deleteall', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ confirm: v }), credentials:'same-origin' });
+    const j = await r.json().catch(()=>({}));
+    if(r.status === 200){ location.reload(); }
+    else { err.textContent = j.err || 'Gagal menghapus.'; }
+  } catch { err.textContent = 'Gagal menghubungi server.'; }
+}
+window.doTxAll = doDelAll;
 </script>
 </body></html>`;
 
@@ -1581,6 +1686,7 @@ function html(url, bulan, chatId, d, uname) {
     .split('{TROWS}').join(tRows)
     .split('{DXEMPTY_CLS}').join(d.tx.length ? 'hidden' : '')
     .split('{TXJSON}').join(JSON.stringify(d.tx))
+    .split('{KATPREF_JSON}').join(JSON.stringify(d.prefMap))
     .split('{OVJSON}').join(JSON.stringify(ov))
     .split('{DAILYJSON}').join(JSON.stringify(d.dayExpArr))
     .split('{INCOMEJSON}').join(JSON.stringify(d.dayIncArr))
