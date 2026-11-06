@@ -1,4 +1,4 @@
-import { handleDashboard, handleCheckLogin, handleLogout, handleWebRegister, handleWebLogin, handleAddTx, handleDeleteTx, handleUpdateTx, handleSetBudget, handleGetTxAll, handleExportCsv, handleBackup, handleRenameKategori, handleDeleteAll, handleSetKategoriTipe } from './dashboard.js';
+import { handleDashboard, handleCheckLogin, handleLogout, handleWebRegister, handleWebLogin, handleWebDemo, handleAddTx, handleDeleteTx, handleUpdateTx, handleSetBudget, handleGetTxAll, handleExportCsv, handleBackup, handleRenameKategori, handleDeleteAll, handleSetKategoriTipe } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -32,6 +32,9 @@ export default {
     }
     if (url.pathname === '/api/web/login') {
       return handleWebLogin(request, env);
+    }
+    if (url.pathname === '/api/web/demo') {
+      return handleWebDemo(request, env);
     }
     if (url.pathname === '/api/tx') {
       return handleAddTx(request, env);
