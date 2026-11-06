@@ -1,0 +1,15 @@
+{
+  "name": "Catatan Pengeluaran",
+  "short_name": "Pengeluaran",
+  "description": "Pencatat pengeluaran harian — dashboard ringkas",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17141D",
+  "theme_color": "#17141D",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

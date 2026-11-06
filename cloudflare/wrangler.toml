@@ -12,3 +12,10 @@ account_id = "d20eba7769b60e492cebff100e69dec1"
 binding = "DB"
 database_name = "pengeluaran"
 database_id = "bed9771d-d0d1-4588-9a52-a0740c90ef73"
+
+# Static assets (PWA): manifest, service worker, icons
+[assets]
+directory = "public"
+# Jangan fallback semua ke index.html — biarkan worker menangani route lain
+not_found_handling = "none"
+
