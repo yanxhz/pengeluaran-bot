@@ -6968,7 +6968,7 @@ function html(url, bulan, chatId, d, uname) {
 
 
 
-    .split('{AVG}').join(d.avgDaily)
+    .split('{AVG}').join('Rp ' + nf(d.avgDaily))
 
 
 
