@@ -1,4 +1,4 @@
-import { handleDashboard, handleCheckLogin, handleLogout } from './dashboard.js';
+import { handleDashboard, handleCheckLogin, handleLogout, handleWebRegister, handleWebLogin, handleAddTx, handleDeleteTx, handleUpdateTx, handleSetBudget, handleGetTxAll, handleExportCsv, handleBackup, handleRenameKategori } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -13,10 +13,46 @@ export default {
       if (url.pathname === '/logout') {
         return handleLogout();
       }
+      if (url.pathname === '/api/tx/all') {
+        return handleGetTxAll(request, env);
+      }
+      if (url.pathname === '/api/csv') {
+        return handleExportCsv(request, env);
+      }
+      if (url.pathname === '/api/backup') {
+        return handleBackup(request, env);
+      }
       return new Response('not found', { status: 404 });
     }
     if (url.pathname === '/api/login/check') {
       return handleCheckLogin(request, env);
+    }
+    if (url.pathname === '/api/web/register') {
+      return handleWebRegister(request, env);
+    }
+    if (url.pathname === '/api/web/login') {
+      return handleWebLogin(request, env);
+    }
+    if (url.pathname === '/api/tx') {
+      return handleAddTx(request, env);
+    }
+    if (url.pathname === '/api/tx/delete') {
+      return handleDeleteTx(request, env);
+    }
+    if (url.pathname === '/api/tx/update') {
+      return handleUpdateTx(request, env);
+    }
+    if (url.pathname === '/api/budget') {
+      return handleSetBudget(request, env);
+    }
+    if (url.pathname === '/api/kategori/rename') {
+      return handleRenameKategori(request, env);
+    }
+    if (url.pathname === '/api/tx/all') {
+      return handleGetTxAll(request, env);
+    }
+    if (url.pathname === '/api/csv') {
+      return handleExportCsv(request, env);
     }
     if (request.method !== 'POST' || url.pathname !== '/webhook') {
       return new Response('not found', { status: 404 });
