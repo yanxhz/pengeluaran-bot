@@ -1025,7 +1025,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
         <div class="hdr" style="margin-bottom:8px">
           <h2>Pemasukan vs Pengeluaran · 5 bulan</h2>
         </div>
-        <div class="chartbox" style="height:200px">{TREND_SVG}</div>
+        <div class="chartbox" style="height:200px;max-width:720px;margin:0 auto">{TREND_SVG}</div>
       </div>
 
       <div class="grid2">
