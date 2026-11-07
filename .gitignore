@@ -15,6 +15,10 @@ __pycache__/
 cloudflare/.wrangler/
 cloudflare/login.out
 cloudflare/.dev.vars
+cloudflare/tmp/
+cloudflare/diag*.py
+cloudflare/livetest*.py
+cloudflare/*_live.html
 
 # Node
 node_modules/

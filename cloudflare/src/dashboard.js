@@ -611,6 +611,17 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
 
 
   (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const insEmoji = (s) => {
+  const t = String(s || '');
+  if (t.includes('tabungan') || t.includes('menabung')) return '🐷';
+  if (t.includes('terlampaui') || t.includes('melebihi')) return '⚠️';
+  if (t.includes('mendekati') || t.includes('terpakai')) return '📊';
+  if (t.includes('terbesar')) return '🏆';
+  if (t.includes('keinginan')) return '🎯';
+  if (t.includes('Estimasi') || t.includes('estimasi')) return '📈';
+  if (t.includes('pemasukan')) return '💸';
+  return '💡';
+};
 
 
 
@@ -2038,7 +2049,7 @@ function greetingWIB(name) {
 
 
 
-  if (nm) return 'Hi ' + nm;
+  if (nm) return 'Halo, ' + nm + ' 👋';
 
 
 
@@ -2106,7 +2117,7 @@ function greetingWIB(name) {
 
 
 
-  if (h < 11) return 'Selamat Pagi';
+  if (h < 11) return 'Selamat Pagi ☀️';
 
 
 
@@ -2174,7 +2185,7 @@ function greetingWIB(name) {
 
 
 
-  if (h < 15) return 'Selamat Siang';
+  if (h < 15) return 'Selamat Siang 🌤️';
 
 
 
@@ -2242,7 +2253,7 @@ function greetingWIB(name) {
 
 
 
-  if (h < 18) return 'Selamat Sore';
+  if (h < 18) return 'Selamat Sore 🌇';
 
 
 
@@ -2310,7 +2321,7 @@ function greetingWIB(name) {
 
 
 
-  return 'Selamat Malam';
+  return 'Selamat Malam 🌙';
 
 
 
@@ -60373,6 +60384,23 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
+function runCountUpYear(){
+  var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches; if(reduced) return;
+  var els=document.querySelectorAll('.card .val, .m .amt');
+  for(var i=0;i<els.length;i++){
+    (function(el){
+      var raw=el.textContent.trim();
+      var isRp=raw.indexOf('Rp')===0;
+      var target=parseInt(String(raw).replace(/[^0-9]/g,''),10); if(isNaN(target)) return;
+      var prefix=isRp?'Rp ':'', dur=900, start=null;
+      function fmt(n){ return prefix+(isRp?Number(n).toLocaleString('id-ID'):n); }
+      function step(ts){ if(!start) start=ts; var p=Math.min(1,(ts-start)/dur); var e=1-Math.pow(1-p,3); el.textContent=fmt(Math.round(target*e)); if(p<1) requestAnimationFrame(step); else el.textContent=fmt(target); }
+      requestAnimationFrame(step);
+    })(els[i]);
+  }
+}
+runCountUpYear();
+if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', function(){ runCountUpYear(); }); }
 </script>
 
 
@@ -73499,6 +73527,55 @@ to{transform:scale(1);opacity:1}}
 .btn:not(.primary):hover{border-color:var(--p)}
 .nv:active{transform:scale(.98)}
 @media (prefers-reduced-motion: reduce){.card,#cat svg,.btn,.nv{animation:none!important;transition:none!important}}
+/* ===== WOW interaction layer ===== */
+.app{position:relative;z-index:1}
+/* spotlight kartu/panel ikuti kursor */
+.card,.panel{position:relative}
+.card::after,.panel::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%),rgba(170,110,255,.18),transparent 70%)}
+@media (hover:hover) and (pointer:fine){.card:hover::after,.panel:hover::after{opacity:1}}
+/* sheen pada tombol primary */
+.btn.primary{position:relative;overflow:hidden}
+.btn.primary::after{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);animation:sheen 2.8s ease-in-out infinite}
+@keyframes sheen{0%{left:-80%}60%{left:130%}100%{left:130%}}
+@media (prefers-reduced-motion: reduce){
+  .btn.primary::after,.card::after,.panel::after{animation:none!important;transition:none!important;opacity:0!important}
+}
+/* ===== ENHANCEMENTS UI ===== */
+/* transisi antar-tab halus */
+.view{animation:viewIn .28s cubic-bezier(.22,1,.36,1);transition:opacity .15s ease, transform .15s ease}
+.view.leaving{opacity:0;transform:translateY(6px)}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* toast sukses */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(16px);background:var(--inc);color:#fff;font-weight:800;font-size:14px;padding:12px 18px;border-radius:12px;border:2px solid var(--tx);box-shadow:4px 4px 0 var(--tx);opacity:0;pointer-events:none;transition:.3s cubic-bezier(.34,1.56,.64,1);z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* quick-add bar */
+.quickadd{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border:3px solid var(--tx);border-radius:16px;padding:10px 12px;margin:14px 0 4px;box-shadow:var(--shadow)}
+.quickadd .qa-chip{border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-weight:800;font-size:12.5px;padding:7px 12px;border-radius:10px;cursor:pointer;transition:.12s}
+.quickadd .qa-chip:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}
+.quickadd .qa-inp{flex:1;min-width:110px}
+.quickadd .qa-btn{border:2px solid var(--tx);background:var(--tx);color:var(--card);font-weight:800;padding:7px 14px;border-radius:10px;cursor:pointer}
+/* empty state menarik */
+.empty{position:relative}
+.empty .empty-ico{font-size:38px;display:block;margin-bottom:6px;filter:drop-shadow(2px 2px 0 rgba(23,23,23,.25))}
+.empty .empty-btn{margin-top:12px;display:inline-block}
+/* budget mini progress di kartu hero */
+.budmini{height:10px;background:var(--card);border:2px solid var(--tx);overflow:hidden;border-radius:8px;margin-top:8px}
+.budmini div{height:100%;background:var(--p);transition:width .6s cubic-bezier(.22,1,.36,1)}
+.budmini.warn div{background:var(--yellow)}
+.budmini.over div{background:var(--exp)}
+/* skeleton shimmer */
+.skel{position:relative;overflow:hidden;background:var(--card);border-radius:8px;min-height:14px}
+.skel::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);animation:skelShimmer 1.2s infinite;transform:translateX(-100%)}
+@keyframes skelShimmer{to{transform:translateX(100%)}}
+/* insight dengan ikon */
+.insight{position:relative;padding-left:34px}
+.insight::before{content:attr(data-emoji);position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px}
+/* sapaan lebih besar */
+.greet-card h1{font-size:28px;line-height:1.1;font-weight:900}
+/* chip pembanding bulan lalu */
+.cmp-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;border:2px solid var(--tx);background:var(--card);margin-top:8px}
+.cmp-chip.up{color:var(--inc)}
+.cmp-chip.down{color:var(--exp)}
 </style><script>
 
 
@@ -75612,6 +75689,13 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
+      <div class="quickadd">
+        <button class="qa-chip" onclick="qaAdd('makan',this)">🍚 Makan</button>
+        <button class="qa-chip" onclick="qaAdd('transport',this)">🛵 Transport</button>
+        <button class="qa-chip" onclick="qaAdd('lainnya',this)">📦 Lainnya</button>
+        <input id="qaIn" class="inp qa-inp" type="text" inputmode="numeric" placeholder="nominal, cth 15000" onkeydown="if(event.key==='Enter')qaAdd('',document.querySelector('.qa-chip'))">
+        <button class="qa-btn" onclick="qaAdd('',document.querySelector('.qa-chip'))">Catat</button>
+      </div>
       <div class="cards">
 
 
@@ -75884,7 +75968,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <div class="card"><div class="lbl">Sisa budget</div><div class="val {REMAIN_CLS}">{REMAIN}</div><div class="sub2">target {BUDGET_TARGET}</div></div>
+        <div class="card"><div class="lbl">Sisa budget</div><div class="val {REMAIN_CLS}">{REMAIN}</div><div class="sub2">target {BUDGET_TARGET}</div><div class="budmini {BUDGET_PCT_CLS}"><div style="width:{BUDGET_PCT}%"></div></div></div>
 
 
 
@@ -79692,7 +79776,11 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <div class="empty {DXEMPTY_CLS}" id="dxempty">Tidak ada transaksi bulan ini.</div>
+        <div class="empty {DXEMPTY_CLS}" id="dxempty">
+          <span class="empty-ico">🗒️</span>
+          Belum ada transaksi bulan ini.
+          <br><button class="btn primary empty-btn" onclick="openTx()">＋ Catat pertama</button>
+        </div>
 
 
 
@@ -82004,7 +82092,9 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
+                    <span class="empty-ico">🔍</span>
           Tidak ada transaksi yang cocok.
+
 
 
 
@@ -89961,753 +90051,27 @@ const COL = {COLORSJSON};
 
 
 function goView(name){
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   if(name==='tahun'){ location.href='/dashboard?view=tahun'; return; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  document.querySelectorAll('.nv[data-v]').forEach(b=>b.classList.remove('active'));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  document.querySelectorAll('.bnav button').forEach(b=>b.classList.remove('on'));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   const sec=document.getElementById('v-'+name); if(!sec) return;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  sec.classList.add('active');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  const btn=document.querySelector('.nv[data-v="'+name+'"]'); if(btn) btn.classList.add('active');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  const bn=document.querySelector('.bnav button[data-v="'+name+'"]'); if(bn) bn.classList.add('on');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if(name==='dash') drawCharts();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if(name==='tx') loadTxAll();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  const cur=document.querySelector('.view.active');
+  if(cur===sec) return;
+  const activate=function(){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active','leaving'));
+    document.querySelectorAll('.nv[data-v]').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.bnav button').forEach(b=>b.classList.remove('on'));
+    sec.classList.add('active');
+    const btn=document.querySelector('.nv[data-v="'+name+'"]'); if(btn) btn.classList.add('active');
+    const bn=document.querySelector('.bnav button[data-v="'+name+'"]'); if(bn) bn.classList.add('on');
+    if(name==='dash') drawCharts();
+    if(name==='tx') loadTxAll();
+    runCountUp();
+  };
+  if(cur){
+    cur.classList.add('leaving');
+    setTimeout(activate, 150);
+  } else {
+    activate();
+  }
 }
 
 
@@ -94296,6 +93660,48 @@ function closeTx(){ document.getElementById('ovTx').classList.remove('open'); }
 
 
 window.openTx = openTx; window.closeTx = closeTx;
+function showToast(msg){
+  var t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg || '✓ Tersimpan';
+  t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+window.showToast = showToast;
+function qaAdd(kat, btn){
+  var inp = document.getElementById('qaIn');
+  var val = inp ? inp.value.trim() : '';
+  if(!val){ if(inp) inp.focus(); return; }
+  var teks = kat ? (kat + ' ' + val) : val;
+  fetch('/api/tx', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ teks: teks }), credentials:'same-origin' })
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {ok:r.status===200, j:j}; }); })
+    .then(function(res){
+      if(res.ok){ showToast('✓ ' + (kat || 'Transaksi') + ' tersimpan'); if(inp) inp.value=''; setTimeout(function(){ reloadPreserveScroll(); }, 800); }
+      else { var err=document.getElementById('txerr'); if(err){ err.textContent = res.j.err || 'Gagal menyimpan.'; } }
+    })
+    .catch(function(){ var err=document.getElementById('txerr'); if(err) err.textContent='Gagal menghubungi server.'; });
+}
+window.qaAdd = qaAdd;
+function reloadPreserveScroll(){
+  try{ sessionStorage.setItem('dash_scroll', String(window.scrollY)); }catch(e){}
+  var av = document.querySelector('.view.active');
+  if(av && av.id){ try{ sessionStorage.setItem('dash_view', av.id); }catch(e){} }
+  location.reload();
+}
+window.reloadPreserveScroll = reloadPreserveScroll;
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
+      if(v){ goView(v==='v-dash' ? 'dash' : 'tx'); }
+      if(s){ window.scrollTo(0, Number(s)); sessionStorage.removeItem('dash_scroll'); } sessionStorage.removeItem('dash_view');
+    }catch(e){} });
+} else {
+  try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
+    if(v){ goView(v==='v-dash' ? 'dash' : 'tx'); }
+    if(s){ window.scrollTo(0, Number(s)); sessionStorage.removeItem('dash_scroll'); } sessionStorage.removeItem('dash_view');
+  }catch(e){}
+}
 
 
 
@@ -94839,7 +94245,7 @@ async function doTx(){
 
 
 
-    if(r.status === 200){ location.reload(); }
+    if(r.status === 200){ showToast('✓ Tersimpan'); setTimeout(function(){ reloadPreserveScroll(); }, 800); }
 
 
 
@@ -97763,7 +97169,7 @@ async function saveEdit(){
 
 
 
-    if(r.status === 200){ location.reload(); }
+    if(r.status === 200){ reloadPreserveScroll(); }
 
 
 
@@ -98579,7 +97985,7 @@ async function delTx(id){
 
 
 
-    if(r.status === 200){ location.reload(); }
+    if(r.status === 200){ reloadPreserveScroll(); }
 
 
 
@@ -103203,7 +102609,7 @@ async function setBudget(){
 
 
 
-    if(r.status === 200){ location.reload(); }
+    if(r.status === 200){ reloadPreserveScroll(); }
 
 
 
@@ -106943,7 +106349,7 @@ async function saveKat(){
 
 
 
-    if(r.status === 200){ location.reload(); }
+    if(r.status === 200){ reloadPreserveScroll(); }
 
 
 
@@ -108303,7 +107709,7 @@ async function doDelAll(){
 
 
 
-    if(r.status === 200){ location.reload(); }
+    if(r.status === 200){ reloadPreserveScroll(); }
 
 
 
@@ -108578,9 +107984,10 @@ async function doDelAll(){
 window.doTxAll = doDelAll;
 /* ================= WOW EFFECTS ================= */
 
-/* #1 count-up animasi angka di kartu */
-(function(){
+/* #1 count-up animasi angka di kartu (fungsi global, bisa dipanggil ulang) */
+function runCountUp(){
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduced) return;
   var cards = document.querySelectorAll('.card .val');
   for(var i=0;i<cards.length;i++){
     (function(el){
@@ -108588,7 +107995,6 @@ window.doTxAll = doDelAll;
       var isRp = raw.indexOf('Rp') === 0;
       var target = parseInt(String(raw).replace(/[^0-9]/g,''), 10);
       if(isNaN(target)) return;
-      if(reduced) return;
       var prefix = isRp ? 'Rp ' : '';
       var dur = 900, start = null;
       function fmt(n){ return prefix + (isRp ? Number(n).toLocaleString('id-ID') : n); }
@@ -108600,17 +108006,12 @@ window.doTxAll = doDelAll;
         if(p < 1) requestAnimationFrame(step);
         else el.textContent = fmt(target);
       }
-      var st = performance.now();
-      var timer = setInterval(function(){
-        var p = Math.min(1, (performance.now()-st)/dur);
-        var e = 1 - Math.pow(1-p, 3);
-        el.textContent = fmt(Math.round(target*e));
-        if(p >= 1){ clearInterval(timer); el.textContent = fmt(target); }
-      }, 16);
       requestAnimationFrame(step);
     })(cards[i]);
   }
-})();
+}
+window.runCountUp = runCountUp;
+runCountUp();
 
 /* #12 insight otomatis dari data */
 (function(){
@@ -108641,6 +108042,26 @@ window.doTxAll = doDelAll;
   if(ins.length){
     box.innerHTML = ins.map(function(s){ return '<div class="insight">' + s + '</div>'; }).join('');
   }
+})();
+
+/* ================= WOW INTERACTION LAYER ================= */
+(function(){
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fine = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if(!fine || reduced) return;
+
+  /* spotlight kartu/panel ikuti kursor */
+  var spots = document.querySelectorAll('.card, .panel');
+  for(var s = 0; s < spots.length; s++){
+    (function(el){
+      el.addEventListener('pointermove', function(e){
+        var r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    })(spots[s]);
+  }
+
 })();
 
 
@@ -108778,6 +108199,7 @@ window.doTxAll = doDelAll;
 
 
 
+<div class="toast" id="toast">✓ Tersimpan</div>
 </body></html>`;
 
 
@@ -112721,6 +112143,8 @@ function html(url, bulan, chatId, d, uname) {
 
 
   const remainCls = d.remainBudget === null ? 'p' : (d.remainBudget >= 0 ? 'inc' : 'exp');
+  const bPct = d.budgetNom ? Math.min(100, Math.round((d.expenseTotal / d.budgetNom) * 100)) : 0;
+  const bPctCls = d.budgetNom ? (d.expenseTotal > d.budgetNom ? 'over' : (d.expenseTotal >= d.budgetNom * 0.8 ? 'warn' : '')) : '';
 
 
 
@@ -118025,6 +117449,8 @@ function html(url, bulan, chatId, d, uname) {
 
 
     .split('{BUDGET_TARGET}').join(d.budgetNom === null ? 'belum diset' : rp(d.budgetNom))
+    .split('{BUDGET_PCT}').join(String(bPct))
+    .split('{BUDGET_PCT_CLS}').join(bPctCls)
 
 
 
@@ -118500,7 +117926,7 @@ function html(url, bulan, chatId, d, uname) {
 
 
 
-    .split('{INSIGHTS}').join(d.insights.map((s) => `<div class="insight">${esc(s)}</div>`).join(''))
+    .split('{INSIGHTS}').join(d.insights.map((s) => `<div class="insight" data-emoji="${insEmoji(s)}">${esc(s)}</div>`).join(''))
 
 
 
