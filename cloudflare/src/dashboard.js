@@ -69335,7 +69335,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
- .panel{background:var(--card);border:3px solid var(--tx);border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:var(--shadow)}
+ .panel{background:var(--card);border:3px solid var(--tx);border-radius:16px;padding:22px;margin-bottom:26px;box-shadow:var(--shadow)}
 
 
 
@@ -73556,7 +73556,7 @@ to{transform:scale(1);opacity:1}}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(16px);background:var(--inc);color:#fff;font-weight:800;font-size:14px;padding:12px 18px;border-radius:12px;border:2px solid var(--tx);box-shadow:4px 4px 0 var(--tx);opacity:0;pointer-events:none;transition:.3s cubic-bezier(.34,1.56,.64,1);z-index:200}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* quick-add bar */
-.quickadd{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border:3px solid var(--tx);border-radius:16px;padding:10px 12px;margin:14px 0 4px;box-shadow:var(--shadow)}
+.quickadd{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border:3px solid var(--tx);border-radius:16px;padding:10px 12px;margin:18px 0 24px;box-shadow:var(--shadow)}
 .quickadd .qa-chip{border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-weight:800;font-size:12.5px;padding:7px 12px;border-radius:10px;cursor:pointer;transition:.12s}
 .quickadd .qa-chip:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}
 .quickadd .qa-inp{flex:1;min-width:110px}
@@ -75851,7 +75851,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <div class="card"><div class="lbl">Pemasukan</div><div class="val inc">{INCOME}</div><div class="sub2">{INC_SUB}</div></div>
+        <div class="card"><div class="lbl">Pemasukan bulan ini</div><div class="val inc">{INCOME}</div><div class="sub2">{INC_SUB}</div></div>
 
 
 
@@ -75919,7 +75919,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <div class="card"><div class="lbl">Pengeluaran</div><div class="val exp">{TOTAL}</div><div class="sub2">{DELTA}</div></div>
+        <div class="card"><div class="lbl">Pengeluaran bulan ini</div><div class="val exp">{TOTAL}</div><div class="sub2">{DELTA}</div></div>
         <div class="card"><div class="lbl">Pengeluaran hari ini</div><div class="val exp">{TODAY}</div><div class="sub2">hari ini</div></div>
 
 
@@ -93803,15 +93803,18 @@ window.reloadPreserveScroll = reloadPreserveScroll;
   function injectStyle(){ try{ var s=document.createElement("style"); s.textContent=".rv{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease}.rv.in{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}"; document.head.appendChild(s); }catch(e){} }
   function initReveal(){
     injectStyle();
-    if(!('IntersectionObserver' in window)) return;
     var els = document.querySelectorAll(".view .card, .view .chartbox, #cat");
     if(!els.length) return;
+    // pengaman: pastikan tak ada elemen yang tertinggal tak terlihat (mis. observer gagal di mobile)
+    var forceShow = function(){ for(var i=0;i<els.length;i++){ els[i].classList.add("in"); } };
+    setTimeout(forceShow, 900);
+    if(!('IntersectionObserver' in window)) return;
     try{
       var io = new IntersectionObserver(function(entries){
         entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
-      }, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
+      }, { threshold: 0.05 });
       for(var i=0;i<els.length;i++){ els[i].classList.add("rv"); io.observe(els[i]); }
-    }catch(e){}
+    }catch(e){ forceShow(); }
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initReveal); else initReveal();
 })();
@@ -112331,7 +112334,7 @@ function html(url, bulan, chatId, d, uname) {
 
 
 
-    ? `<span class="dn">▲ ${d.expDelta}%</span> <span class="mut">dibanding bulan lalu (Rp ${nf(d.prevExp)} → Rp ${nf(d.expenseTotal)})</span>`
+    ? `<span class="dn">▲ ${d.expDelta}%</span> <span class="mut">dibanding bulan lalu (Rp ${nf(d.prevExp)})</span>`
 
 
 
@@ -112365,7 +112368,7 @@ function html(url, bulan, chatId, d, uname) {
 
 
 
-    : `<span class="up">▼ ${Math.abs(d.expDelta)}%</span> <span class="mut">dibanding bulan lalu (Rp ${nf(d.prevExp)} → Rp ${nf(d.expenseTotal)})</span>`);
+    : `<span class="up">▼ ${Math.abs(d.expDelta)}%</span> <span class="mut">dibanding bulan lalu (Rp ${nf(d.prevExp)})</span>`);
 
 
 
