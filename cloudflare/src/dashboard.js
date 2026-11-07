@@ -92171,7 +92171,9 @@ function svgCat(cats){
 
 
 
-  return '<svg viewBox="0 0 200 200" width="100%" style="max-width:220px" role="img">'+segs+'<text x="'+C+'" y="'+(C-2)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#171717">'+Number(total).toLocaleString('id-ID')+'</text><text x="'+C+'" y="'+(C+16)+'" text-anchor="middle" font-size="10" fill="#5a5560">total bulan ini</text></svg>';
+  var tstr = Number(total).toLocaleString('id-ID');
+  var fs = Math.max(10, Math.min(18, Math.floor(140 / tstr.length)));
+  return '<svg viewBox="0 0 200 200" width="100%" style="max-width:220px" role="img">'+segs+'<text x="'+C+'" y="'+(C-2)+'" text-anchor="middle" font-size="'+fs+'" font-weight="800" fill="#171717">'+tstr+'</text><text x="'+C+'" y="'+(C+16)+'" text-anchor="middle" font-size="10" fill="#5a5560">total bulan ini</text></svg>';
 
 
 
@@ -99983,7 +99985,7 @@ function txMonth(delta){
 
 
   function txFmtBulan(str){
-    const bln = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const bln = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const mm = String(str||'').split('-'); if(mm.length<2) return str||'';
     const y=mm[0], mo=parseInt(mm[1],10)-1; return (bln[mo]||mm[1]) + ' ' + y;
   }
@@ -102572,7 +102574,7 @@ async function setBudget(){
 
 
 
-    if(r.status === 200){ reloadPreserveScroll(); }
+    if(r.status === 200){ showToast('✓ Budget tersimpan'); setTimeout(function(){ reloadPreserveScroll(); }, 800); }
 
 
 
@@ -109709,7 +109711,9 @@ function svgCatServer(cats){
 
 
 
-  return '<svg viewBox="0 0 200 200" width="100%" style="max-width:220px" role="img">'+segs+'<text x="'+C+'" y="'+(C-2)+'" text-anchor="middle" font-size="20" font-weight="800" fill="#171717">'+nf(total)+'</text><text x="'+C+'" y="'+(C+16)+'" text-anchor="middle" font-size="10" fill="#5a5560">total bulan ini</text></svg>';
+  var tstr = nf(total);
+  var fs = Math.max(10, Math.min(18, Math.floor(140 / tstr.length)));
+  return '<svg viewBox="0 0 200 200" width="100%" style="max-width:220px" role="img">'+segs+'<text x="'+C+'" y="'+(C-2)+'" text-anchor="middle" font-size="'+fs+'" font-weight="800" fill="#171717">'+tstr+'</text><text x="'+C+'" y="'+(C+16)+'" text-anchor="middle" font-size="10" fill="#5a5560">total bulan ini</text></svg>';
 
 
 
