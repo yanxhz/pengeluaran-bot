@@ -90062,6 +90062,15 @@ const COL = {COLORSJSON};
 
 
 
+function syncDashBulan(){
+  try{
+    var stored = sessionStorage.getItem('dash_bulan');
+    if(!stored) return;
+    var rendered = sessionStorage.getItem('dash_rendered');
+    if(rendered !== stored) location.href = '?bulan=' + stored;
+  }catch(e){}
+}
+window.syncDashBulan = syncDashBulan;
 function activateViewNow(name){
   if(name==='tahun'){ location.href='/dashboard?view=tahun'; return; }
   const sec=document.getElementById('v-'+name); if(!sec) return;
@@ -90071,7 +90080,7 @@ function activateViewNow(name){
   sec.classList.add('active');
   const btn=document.querySelector('.nv[data-v="'+name+'" ]'); if(btn) btn.classList.add('active');
   const bn=document.querySelector(".bnav button[data-v='"+name+"' ]"); if(bn) bn.classList.add("on");
-  if(name==='dash') drawCharts();
+  if(name==='dash'){ syncDashBulan(); drawCharts(); }
   if(name==='tx') loadTxAll();
 }
 window.activateViewNow = activateViewNow;
@@ -90087,7 +90096,7 @@ function goView(name){
     sec.classList.add('active');
     const btn=document.querySelector('.nv[data-v="'+name+'"]'); if(btn) btn.classList.add('active');
     const bn=document.querySelector('.bnav button[data-v="'+name+'"]'); if(bn) bn.classList.add('on');
-    if(name==='dash') drawCharts();
+    if(name==='dash'){ syncDashBulan(); drawCharts(); }
     if(name==='tx') loadTxAll();
     runCountUp();
   };
@@ -98557,6 +98566,7 @@ let TXDATA = [];
 
 
 let TXMONTH = TXBULAN;
+try{ var __rb = new URL(location.href).searchParams.get('bulan') || TXBULAN; sessionStorage.setItem('dash_rendered', __rb); }catch(e){}
 
 
 
@@ -99849,6 +99859,8 @@ function txMonth(delta){
 
 
   TXMONTH = d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0');
+  try{ sessionStorage.setItem('dash_bulan', TXMONTH); }catch(e){}
+  try{ var u=new URL(location.href); u.searchParams.set('bulan', TXMONTH); history.replaceState(null,'',u.toString()); }catch(e){}
 
 
 
