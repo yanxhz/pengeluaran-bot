@@ -93777,7 +93777,7 @@ function qaAdd(kat, btn){
   fetch('/api/tx', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ teks: teks }), credentials:'same-origin' })
     .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {ok:r.status===200, j:j}; }); })
     .then(function(res){
-      if(res.ok){ showToast('✓ ' + (kat || 'Transaksi') + ' tersimpan'); if(inp) inp.value=''; }
+      if(res.ok){ showToast('✓ ' + (kat || 'Transaksi') + ' tersimpan'); if(inp) inp.value=''; try{ loadTxAll(); }catch(e){} }
       else { var err=document.getElementById('txerr'); if(err){ err.textContent = res.j.err || 'Gagal menyimpan.'; } }
     })
     .catch(function(){ var err=document.getElementById('txerr'); if(err) err.textContent='Gagal menghubungi server.'; });
