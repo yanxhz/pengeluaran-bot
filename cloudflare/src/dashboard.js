@@ -73542,9 +73542,9 @@ to{transform:scale(1);opacity:1}}
 }
 /* ===== ENHANCEMENTS UI ===== */
 /* transisi antar-tab halus */
-.view{animation:viewIn .28s cubic-bezier(.22,1,.36,1);transition:opacity .15s ease, transform .15s ease}
-.view.leaving{opacity:0;transform:translateY(6px)}
-@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.view{animation:viewIn .42s cubic-bezier(.16,1,.3,1);transition:opacity .24s ease, transform .24s cubic-bezier(.16,1,.3,1)}
+.view.leaving{opacity:0;transform:translateY(12px) scale(.99)}
+@keyframes viewIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 /* toast sukses */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(16px);background:var(--inc);color:#fff;font-weight:800;font-size:14px;padding:12px 18px;border-radius:12px;border:2px solid var(--tx);box-shadow:4px 4px 0 var(--tx);opacity:0;pointer-events:none;transition:.3s cubic-bezier(.34,1.56,.64,1);z-index:200}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -73570,6 +73570,18 @@ to{transform:scale(1);opacity:1}}
 /* insight dengan ikon */
 .insight{position:relative;padding-left:34px}
 .insight::before{content:attr(data-emoji);position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px}
+/* hewan-hewan lucu melayang */
+.pet{position:fixed;z-index:45;pointer-events:none;font-size:30px;line-height:1;filter:drop-shadow(2px 3px 0 rgba(23,23,23,.25));user-select:none}
+.pet .pe{display:inline-block;animation:petBob 3.6s ease-in-out infinite}
+.pet.wiggle .pe{animation:petBob 3.6s ease-in-out infinite, petWiggle 4.8s ease-in-out infinite}
+.pet.flip{transform:scaleX(-1)}
+.pet.p1{bottom:74px;left:14px;font-size:34px}
+.pet.p2{bottom:110px;left:64px;font-size:22px;animation-delay:-1.2s}
+.pet.p3{top:92px;right:20px;font-size:30px}
+.pet.p4{top:150px;right:78px;font-size:22px;animation-delay:-2s}
+@keyframes petBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes petWiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(8deg)}}
+@media (prefers-reduced-motion: reduce){.pet{display:none}}
 /* sapaan lebih besar */
 .greet-card h1{font-size:28px;line-height:1.1;font-weight:900}
 /* chip pembanding bulan lalu */
@@ -90050,6 +90062,19 @@ const COL = {COLORSJSON};
 
 
 
+function activateViewNow(name){
+  if(name==='tahun'){ location.href='/dashboard?view=tahun'; return; }
+  const sec=document.getElementById('v-'+name); if(!sec) return;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active','leaving'));
+  document.querySelectorAll('.nv[data-v]').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bnav button').forEach(b=>b.classList.remove('on'));
+  sec.classList.add('active');
+  const btn=document.querySelector('.nv[data-v="'+name+'" ]'); if(btn) btn.classList.add('active');
+  const bn=document.querySelector(".bnav button[data-v='"+name+"' ]"); if(bn) bn.classList.add("on");
+  if(name==='dash') drawCharts();
+  if(name==='tx') loadTxAll();
+}
+window.activateViewNow = activateViewNow;
 function goView(name){
   if(name==='tahun'){ location.href='/dashboard?view=tahun'; return; }
   const sec=document.getElementById('v-'+name); if(!sec) return;
@@ -90068,7 +90093,7 @@ function goView(name){
   };
   if(cur){
     cur.classList.add('leaving');
-    setTimeout(activate, 150);
+    setTimeout(activate, 240);
   } else {
     activate();
   }
@@ -93693,12 +93718,12 @@ window.reloadPreserveScroll = reloadPreserveScroll;
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', function(){
     try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
-      if(v){ goView(v==='v-dash' ? 'dash' : 'tx'); }
+      if(v){ activateViewNow(v==='v-dash' ? 'dash' : 'tx'); }
       if(s){ window.scrollTo(0, Number(s)); sessionStorage.removeItem('dash_scroll'); } sessionStorage.removeItem('dash_view');
     }catch(e){} });
 } else {
   try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
-    if(v){ goView(v==='v-dash' ? 'dash' : 'tx'); }
+    if(v){ activateViewNow(v==='v-dash' ? 'dash' : 'tx'); }
     if(s){ window.scrollTo(0, Number(s)); sessionStorage.removeItem('dash_scroll'); } sessionStorage.removeItem('dash_view');
   }catch(e){}
 }
@@ -99957,75 +99982,13 @@ function txMonth(delta){
 
 
 
+  function txFmtBulan(str){
+    const bln = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const mm = String(str||'').split('-'); if(mm.length<2) return str||'';
+    const y=mm[0], mo=parseInt(mm[1],10)-1; return (bln[mo]||mm[1]) + ' ' + y;
+  }
   const hdr = document.querySelector('#v-tx .hdr .sub');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if(hdr) hdr.textContent = TXMONTH;
+  if(hdr) hdr.textContent = txFmtBulan(TXMONTH);
 
 
 
@@ -100161,7 +100124,7 @@ function txMonth(delta){
 
 
 
-  for(const n of nav){ n.textContent = TXMONTH; }
+  for(const n of nav){ n.textContent = txFmtBulan(TXMONTH); }
 
 
 
@@ -108011,6 +107974,22 @@ function runCountUp(){
   }
 }
 window.runCountUp = runCountUp;
+/* hewan lucu melayang */
+(function(){
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduced) return;
+  var pets = [
+    { cls:'pet p1 wiggle', e:'🐱' },
+    { cls:'pet p2', e:'🐶' },
+    { cls:'pet p3 flip wiggle', e:'🐰' },
+    { cls:'pet p4', e:'🐸' }
+  ];
+  for(var i=0;i<pets.length;i++){
+    var d = document.createElement('div'); d.className = pets[i].cls;
+    d.innerHTML = '<span class="pe">' + pets[i].e + '</span>';
+    document.body.appendChild(d);
+  }
+})();
 runCountUp();
 
 /* #12 insight otomatis dari data */
