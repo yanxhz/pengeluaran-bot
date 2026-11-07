@@ -75707,8 +75707,8 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
         <button class="qa-chip" onclick="qaAdd('transport',this)">🛵 Transport</button>
         <button class="qa-chip" onclick="qaAdd('lainnya',this)">📦 Lainnya</button>
         <input id="qaIn" class="inp qa-inp" type="text" inputmode="numeric" placeholder="nominal, cth 15000" onkeydown="if(event.key==='Enter')qaAdd('',document.querySelector('.qa-chip'))">
-        <button class="qa-btn" onclick="qaAdd('',document.querySelector('.qa-chip'))">Catat</button>
-      </div>
+        <button class="mic-btn" data-target="qaIn" onclick="voiceInput(this)" title="Coba bicara">🎤</button>
+        <button class="qa-btn" onclick="qaAdd('',document.querySelector('.qa-chip'))">Catat</button>      </div>
       <div class="cards">
 
 
@@ -84147,8 +84147,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-      <input id="txin" class="inp" style="width:100%;margin-top:10px;font-size:14px" placeholder="cth: makan 15000" autocomplete="off">
-
+      <div style="display:flex;gap:8px;margin-top:10px"><input id="txin" class="inp" style="width:100%;font-size:14px" placeholder="cth: makan 15000" autocomplete="off"><button class="mic-btn" data-target="txin" onclick="voiceInput(this)" title="Coba bicara">🎤</button></div>
 
 
 
@@ -90312,6 +90311,55 @@ document.querySelectorAll('.bnav button[data-v]').forEach(b=>b.onclick=()=>goVie
 
 
 window.goView=goView;
+function voiceInput(btn){
+  var SR = window.webkitSpeechRecognition || window.SpeechRecognition;
+  if(!SR){ showToast('⚠ Browser belum mendukung voice'); return; }
+  var inp = btn && document.getElementById(btn.getAttribute('data-target'));
+  if(!inp) return;
+  var rec = new SR(); rec.lang='id-ID'; rec.maxAlternatives=1; rec.interimResults=false; rec.continuous=false;
+  rec.onstart=function(){ btn.classList.add('rec'); showToast('🎤 Mendengarkan…'); };
+  rec.onend=function(){ btn.classList.remove('rec'); };
+  rec.onresult=function(e){ var txt=e.results[0][0].transcript||''; var norm=normalizeVoice(txt); inp.value=norm; showToast('✓ "'+norm+'"'); inp.focus(); };
+  rec.onerror=function(e){ btn.classList.remove('rec'); var m={'not-allowed':'Izinkan mikrofon dulu','network':'Gagal terhubung ke layanan suara','no-speech':'Tidak terdengar suara','audio-capture':'Mikrofon tidak terdeteksi','service-not-allowed':'Layanan suara diblokir'}[e.error] || ('Voice error: '+e.error); showToast('⚠ '+m); };
+  try{ rec.start(); }catch(err){ showToast('⚠ '+err.message); }
+}
+window.voiceInput = voiceInput;
+function indoWordsToNum(s){
+  var U={nol:0,satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9};
+  var toks=s.split(/\\s+/); var total=0, cur=0, i=0;
+  while(i<toks.length){ var t=toks[i];
+    if(U[t]!==undefined){ var nx=toks[i+1];
+      if(nx==='belas'){ cur+=U[t]+10; i++; } else if(nx==='puluh'){ cur+=U[t]*10; i++; } else if(nx==='ratus'){ cur+=U[t]*100; i++; } else cur+=U[t]; }
+    else if(t==='sepuluh'){ cur+=10; } else if(t==='sebelas'){ cur+=11; } else if(t==='seratus'){ cur+=100; }
+    else if(t==='seribu'){ total+=(cur||1)*1000; cur=0; } else if(t==='sejuta'){ total+=(cur||1)*1000000; cur=0; } else if(t==='semiliar'){ total+=(cur||1)*1000000000; cur=0; }
+    else if(t==='puluh'){ cur=(cur||1)*10; } else if(t==='ratus'){ cur=(cur||1)*100; }
+    else if(t==='ribu'){ total+=(cur||1)*1000; cur=0; } else if(t==='juta'){ total+=(cur||1)*1000000; cur=0; } else if(t==='miliar'){ total+=(cur||1)*1000000000; cur=0; }
+    i++; }
+  return total+cur;
+}
+function convertNumberWords(s){
+  var T=/^(nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|seratus|seribu|sejuta|semiliar|belas|puluh|ratus|ribu|juta|miliar)$/;
+  var toks=s.split(/\\s+/); var out=[]; var i=0;
+  while(i<toks.length){
+    if(T.test(toks[i])){ var j=i; while(j<toks.length && T.test(toks[j])) j++; var phrase=toks.slice(i,j).join(' '); var num=indoWordsToNum(phrase); out.push(num>0? String(num):phrase); i=j; }
+    else { out.push(toks[i]); i++; }
+  }
+  return out.join(' ');
+}
+function normalizeVoice(text){
+  var t=String(text||'').toLowerCase();
+  t=t.replace(/[^\\p{L}\\p{N}\\s]/gu,' ');
+  var fillers=/\\b(bro|broo|gw|gue|gua|aku|saya|nih|tuh|ini|itu|habis|abis|udah|sudah|dah|tadi|td|cuma|cuman|aja|saja|mau|pengen|pengin|dong|deh|ya|yah|ok|oke|lah|kan|wkwk|eh|um|emm|anu|doang|banget|bangets|nggak|ga|gak|gimana)\\b/g;
+  t=t.replace(fillers,' ');
+  t=t.replace(/\\s+/g,' ').trim();
+  t=convertNumberWords(t);
+  return t;
+}
+window.normalizeVoice = normalizeVoice;
+// mic styles
+(function(){ try{ if(!document.getElementById('micstyle')){ var s=document.createElement('style'); s.id='micstyle'; s.textContent='.mic-btn{cursor:pointer;border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-size:16px;border-radius:10px;padding:0 10px;line-height:1;box-shadow:3px 3px 0 var(--tx);transition:.12s;flex:none}.mic-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tx)}.mic-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}.mic-btn.rec{animation:micpulse 1s ease-in-out infinite}@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 10px rgba(255,60,60,0)}}[data-theme="dark"] .mic-btn{background:var(--card);border-color:var(--yellow);color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){}
+})();
+window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('micstyle')){ var s=document.createElement('style'); s.id='micstyle'; s.textContent='.mic-btn{cursor:pointer;border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-size:16px;border-radius:10px;padding:0 10px;line-height:1;box-shadow:3px 3px 0 var(--tx);transition:.12s;flex:none}.mic-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tx)}.mic-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}.mic-btn.rec{animation:micpulse 1s ease-in-out infinite}@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 10px rgba(255,60,60,0)}}[data-theme="dark"] .mic-btn{background:var(--card);border-color:var(--yellow);color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
 
 
 
