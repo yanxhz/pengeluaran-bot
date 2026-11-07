@@ -90324,7 +90324,7 @@ function voiceInput(btn){
     var norm=normalizeVoice(txt);
     if(!norm){ showToast('⚠ Tidak ada teks terdeteksi'); return; }
     inp.value=norm;
-    var hasNum=/\\d/.test(norm);
+    var hasNum=/[0-9]/.test(norm);
     if(!hasNum){ showToast('⚠ Cek teks lalu lengkapi angkanya'); inp.focus(); return; }
     var tgt=btn.getAttribute('data-target');
     if(tgt==='qaIn'){ if(window.qaAdd){ qaAdd('', document.querySelector('.qa-chip')); } else { showToast('✓ "'+norm+'"'); } }
@@ -90335,12 +90335,13 @@ function voiceInput(btn){
 }
 window.voiceInput = voiceInput;
 function indoWordsToNum(s){
-  var U={nol:0,satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9};
+  var U={nol:0,satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9,sepuluh:10,sebelas:11,seratus:100};
   var toks=s.split(/\\s+/); var total=0, cur=0, i=0;
   while(i<toks.length){ var t=toks[i];
-    if(U[t]!==undefined){ var nx=toks[i+1];
-      if(nx==='belas'){ cur+=U[t]+10; i++; } else if(nx==='puluh'){ cur+=U[t]*10; i++; } else if(nx==='ratus'){ cur+=U[t]*100; i++; } else cur+=U[t]; }
-    else if(t==='sepuluh'){ cur+=10; } else if(t==='sebelas'){ cur+=11; } else if(t==='seratus'){ cur+=100; }
+    var v=U[t];
+    if(v===undefined && /^[0-9][0-9.,]*$/.test(t)) v=parseInt(t.replace(/[.,]/g,''),10);
+    if(v!==undefined){ var nx=toks[i+1];
+      if(nx==='belas'){ cur+=v+10; i++; } else if(nx==='puluh'){ cur+=v*10; i++; } else if(nx==='ratus'){ cur+=v*100; i++; } else cur+=v; }
     else if(t==='seribu'){ total+=(cur||1)*1000; cur=0; } else if(t==='sejuta'){ total+=(cur||1)*1000000; cur=0; } else if(t==='semiliar'){ total+=(cur||1)*1000000000; cur=0; }
     else if(t==='puluh'){ cur=(cur||1)*10; } else if(t==='ratus'){ cur=(cur||1)*100; }
     else if(t==='ribu'){ total+=(cur||1)*1000; cur=0; } else if(t==='juta'){ total+=(cur||1)*1000000; cur=0; } else if(t==='miliar'){ total+=(cur||1)*1000000000; cur=0; }
@@ -90348,7 +90349,7 @@ function indoWordsToNum(s){
   return total+cur;
 }
 function convertNumberWords(s){
-  var T=/^(nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|seratus|seribu|sejuta|semiliar|belas|puluh|ratus|ribu|juta|miliar)$/;
+  var T=/^(?:[0-9][0-9.,]*|nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|seratus|seribu|sejuta|semiliar|belas|puluh|ratus|ribu|juta|miliar)$/;
   var toks=s.split(/\\s+/); var out=[]; var i=0;
   while(i<toks.length){
     if(T.test(toks[i])){ var j=i; while(j<toks.length && T.test(toks[j])) j++; var phrase=toks.slice(i,j).join(' '); var num=indoWordsToNum(phrase); out.push(num>0? String(num):phrase); i=j; }
