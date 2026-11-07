@@ -90359,6 +90359,10 @@ function convertNumberWords(s){
 }
 function normalizeVoice(text){
   var t=String(text||'').toLowerCase();
+  // gabung pemisah ribuan dulu: 15.000 / 15,000 / 15 000 -> 15000
+  var prev;
+  do { prev=t; t=t.replace(/(\\d)[.,](\\d{3})(?!\\d)/g, '$1$2'); } while(t!==prev);
+  t=t.replace(/(\\d)\\s+(?=\\d{3}(?!\\d))/g, '$1');
   t=t.replace(/[^\\p{L}\\p{N}\\s]/gu,' ');
   var fillers=/\\b(bro|broo|gw|gue|gua|aku|saya|nih|tuh|ini|itu|habis|abis|udah|sudah|dah|tadi|td|cuma|cuman|aja|saja|mau|pengen|pengin|dong|deh|ya|yah|ok|oke|lah|kan|wkwk|eh|um|emm|anu|doang|banget|bangets|nggak|ga|gak|gimana)\\b/g;
   t=t.replace(fillers,' ');
