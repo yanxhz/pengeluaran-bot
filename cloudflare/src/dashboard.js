@@ -33966,6 +33966,8 @@ async function ensureKatPref(env) {
 
 
 const DEFAULT_NEEDS = new Set(['makan', 'transport', 'tagihan', 'kesehatan', 'belanja']);
+const NEED_KEYWORDS = /makan|sarap/i;
+function isNeedCat(k){ return DEFAULT_NEEDS.has(k) || NEED_KEYWORDS.test(k); }
 
 
 
@@ -54304,6 +54306,7 @@ async function getMonthData(env, chatId, bulan) {
 
 
   let needsTotal = 0, wantsTotal = 0;
+  let needsCats = [], wantsCats = [];
 
 
 
@@ -54439,7 +54442,7 @@ async function getMonthData(env, chatId, bulan) {
 
 
 
-    const tipe = prefMap[c.k] || (DEFAULT_NEEDS.has(c.k) ? 'kebutuhan' : 'keinginan');
+    const tipe = prefMap[c.k] || (isNeedCat(c.k) ? 'kebutuhan' : 'keinginan');
 
 
 
@@ -54507,7 +54510,7 @@ async function getMonthData(env, chatId, bulan) {
 
 
 
-    if (tipe === 'kebutuhan') needsTotal += c.v; else wantsTotal += c.v;
+    if (tipe === 'kebutuhan'){ needsTotal += c.v; needsCats.push(c.k); } else { wantsTotal += c.v; wantsCats.push(c.k); }
 
 
 
@@ -56751,7 +56754,7 @@ async function getMonthData(env, chatId, bulan) {
 
 
 
-    incArr, trendArr, monthNet, saveRate, needsTotal, wantsTotal, insights, prefMap,
+    incArr, trendArr, monthNet, saveRate, needsTotal, wantsTotal, needsCats, wantsCats, insights, prefMap,
 
 
 
@@ -71676,6 +71679,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
  .budrow{display:flex;justify-content:space-between;font-size:13px;color:var(--tx);margin:3px 0;font-weight:600}
+ .nw-cats{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
+ .nw-chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--card);border:2px solid var(--tx)}
 
 
 
@@ -89594,6 +89599,8 @@ const KATPREF = {KATPREF_JSON};
 
 
 const DEFAULT_NEEDS = new Set(['makan','transport','tagihan','kesehatan','belanja']);
+const NEED_KEYWORDS = /makan|sarap/i;
+function isNeedCat(k){ return DEFAULT_NEEDS.has(k) || NEED_KEYWORDS.test(k); }
 
 
 
@@ -103563,7 +103570,7 @@ function katPilihChanged(){
 
 
 
-  const tipe = KAT_CURRENT ? (KATPREF[KAT_CURRENT] || (DEFAULT_NEEDS.has(KAT_CURRENT) ? 'kebutuhan' : 'keinginan')) : '';
+  const tipe = KAT_CURRENT ? (KATPREF[KAT_CURRENT] || (isNeedCat(KAT_CURRENT) ? 'kebutuhan' : 'keinginan')) : '';
 
 
 
@@ -111619,6 +111626,7 @@ function needsBodyHtml(d){
 
 
   return '<div class="bud"><div class="budrow"><span>Kebutuhan</span><b>Rp '+nf(d.needsTotal)+'</b></div>' +
+    '<div class="nw-cats">'+(d.needsCats||[]).map(function(k){return '<span class="nw-chip">'+esc(k)+'</span>';}).join('')+'</div>' +
 
 
 
@@ -111755,6 +111763,7 @@ function needsBodyHtml(d){
 
 
     '<div class="budrow"><span>Keinginan</span><b>Rp '+nf(d.wantsTotal)+'</b></div>' +
+    '<div class="nw-cats">'+(d.wantsCats||[]).map(function(k){return '<span class="nw-chip">'+esc(k)+'</span>';}).join('')+'</div>' +
 
 
 
