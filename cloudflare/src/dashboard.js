@@ -71681,6 +71681,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
  .budrow{display:flex;justify-content:space-between;font-size:13px;color:var(--tx);margin:3px 0;font-weight:600}
  .nw-cats{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
  .nw-chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--card);border:2px solid var(--tx)}
+ .nw-bar{height:24px;background:var(--card);border:2px solid var(--tx);border-radius:999px;overflow:hidden;margin:4px 0 12px}
+ .nw-fill{display:flex;align-items:center;justify-content:center;height:100%;color:#fff;font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;border-radius:999px}
 
 
 
@@ -111694,7 +111696,7 @@ function needsBodyHtml(d){
 
 
 
-    '<div class="bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#38BDF8,#22C55E)"></div></div>' +
+    '<div class="nw-bar"><div style="width:'+np+'%" class="nw-fill">'+(np>=16?'Kebutuhan '+np+'%':'')+'</div></div>' +
 
 
 
@@ -111831,7 +111833,7 @@ function needsBodyHtml(d){
 
 
 
-    '<div class="bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#F59E0B,#F87171)"></div></div>' +
+    '<div class="nw-bar"><div style="width:'+wp+'%" class="nw-fill">'+(wp>=16?'Keinginan '+wp+'%':'')+'</div></div>' +
 
 
 
@@ -111899,7 +111901,7 @@ function needsBodyHtml(d){
 
 
 
-    '<div class="budrow"><span class="mut">rasio kebutuhan</span><span>'+np+'%</span></div></div>';
+    '</div>';
 
 
 
