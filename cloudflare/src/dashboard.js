@@ -67363,7 +67363,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
- .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:18px}
+ .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px}
 
 
 
