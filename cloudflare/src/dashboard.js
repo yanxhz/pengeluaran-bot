@@ -90401,23 +90401,17 @@ function buildAnimalStage(){
 }
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", buildAnimalStage); else buildAnimalStage();
 // sprite hewan dinormalisasi (10 hewan x 6 frame) [idx, frameW, h]
-var ANIMAL_SPRITES=[[0,22,22],[1,24,21],[2,23,17],[3,24,19],[4,24,20],[5,23,21],[6,22,20],[7,24,15],[8,24,20],[9,22,19]];
 function buildAnimalStage(){
   var st=document.getElementById('animalStage'); if(!st) return;
-  for(var i=0;i<ANIMAL_SPRITES.length;i++){
-    var idx=ANIMAL_SPRITES[i][0], fw=ANIMAL_SPRITES[i][1], h=ANIMAL_SPRITES[i][2];
-    var scale=2, ew=fw*scale, eh=h*scale, stripW=ew*6;
+  var gifs=["gif1.gif","gif2.gif","gif3.gif","gif4.gif"];
+  for(var i=0;i<gifs.length;i++){
     var d=document.createElement("span"); d.className="anim a"+(i+1);
-    var s=document.createElement("span"); s.className="spr";
-    s.style.width=ew+"px"; s.style.height=eh+"px";
-    s.style.backgroundImage="url('/animal"+idx+".png')";
-    s.style.backgroundSize=stripW+"px "+eh+"px";
-    s.style.backgroundPosition="0 0";
-    d.appendChild(s); st.appendChild(d);
+    var im=document.createElement("img"); im.src="/"+gifs[i]; im.alt="";
+    d.appendChild(im); st.appendChild(d);
   }
 }
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", buildAnimalStage); else buildAnimalStage();
-window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('animstyle')){ var s=document.createElement('style'); s.id='animstyle'; s.textContent='.animal-stage{position:relative;height:88px;overflow:hidden;margin-top:10px;border:2px dashed var(--tx);border-radius:12px;background:var(--card);opacity:.96}.anim{position:absolute;bottom:12px;display:inline-block}.spr{display:block;animation:frames .72s steps(6,end) infinite}@keyframes frames{from{background-position:0 0}to{background-position:83.333% 0}}.a1{animation:walk 9s linear infinite}.a2{animation:walk 13s linear infinite 1.2s}.a3{animation:walk 11s linear infinite 2.4s}.a4{animation:walk 15s linear infinite .6s}.a5{animation:walk 10s linear infinite 2s}.a6{animation:walk 14s linear infinite .9s}.a7{animation:walk 12s linear infinite 1.7s}.a8{animation:walk 16s linear infinite 1.4s}.a9{animation:walk 10.5s linear infinite 2.8s}.a10{animation:walk 13.5s linear infinite .3s}@keyframes walk{0%{left:-8%;transform:scaleX(1)}49%{transform:scaleX(1)}50%{left:102%;transform:scaleX(-1)}99%{transform:scaleX(-1)}100%{left:-8%;transform:scaleX(1)}}[data-theme="dark"] .animal-stage{background:var(--elev,#2c2730);border-color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
+window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('animstyle')){ var s=document.createElement('style'); s.id='animstyle'; s.textContent='.animal-stage{position:relative;height:96px;overflow:hidden;margin-top:10px;border:2px dashed var(--tx);border-radius:12px;background:var(--card);opacity:.96}.anim{position:absolute;bottom:12px;display:inline-block}.anim img{display:block;height:54px;width:auto;max-width:120px}.a1{animation:walk 24s linear infinite}.a2{animation:walk 30s linear infinite 3s}.a3{animation:walk 26s linear infinite 6s}.a4{animation:walk 34s linear infinite 9s}@keyframes walk{0%{left:-6%;transform:scaleX(1)}49.9%{left:100%;transform:scaleX(1)}50%{left:100%;transform:scaleX(-1)}99.9%{left:-6%;transform:scaleX(-1)}100%{left:-6%;transform:scaleX(1)}}[data-theme="dark"] .animal-stage{background:var(--elev,#2c2730);border-color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
 
 
 
