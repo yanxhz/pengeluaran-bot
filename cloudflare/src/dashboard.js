@@ -94841,8 +94841,8 @@ function findTx(id){
 
 
 
-  for(var i=0;i<TX.length;i++) if(TX[i].id === id) return TX[i];
   for(var j=0;j<TXDATA.length;j++){ var _x=TXDATA[j]; if(_x.id===id) return { id:_x.id, tp:_x.tipe||'keluar', t:_x.tanggal, k:_x.kategori, v:_x.nominal, c:_x.catatan||'' }; }
+  for(var i=0;i<TX.length;i++) if(TX[i].id === id) return TX[i];
 
 
 
@@ -97222,7 +97222,7 @@ async function saveEdit(){
 
 
 
-    if(r.status === 200){ closeEdit(); showToast('✓ Perubahan tersimpan'); try{ loadTxAll(); }catch(e){} }
+    if(r.status === 200){ for(var _i=0;_i<TX.length;_i++){ if(TX[_i].id===id){ TX[_i].tp=payload.tipe; TX[_i].t=payload.tanggal; TX[_i].k=payload.kategori; TX[_i].v=Number(String(payload.nominal).replace(/\./g,''))||0; TX[_i].c=payload.catatan; break; } } closeEdit(); showToast('✓ Perubahan tersimpan'); try{ loadTxAll(); }catch(e){} }
 
 
 
