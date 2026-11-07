@@ -65657,8 +65657,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
-  background:var(--bg);color:var(--tx);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior-y:none}
-html{overscroll-behavior-y:none} .main{overscroll-behavior-y:none}
+  background:var(--bg);color:var(--tx);height:100vh;height:100dvh;overflow:hidden}
 
 
 
@@ -93794,7 +93793,7 @@ function qaAdd(kat, btn){
 }
 window.qaAdd = qaAdd;
 function reloadPreserveScroll(){
-  try{ sessionStorage.setItem('dash_scroll', String(window.scrollY)); }catch(e){}
+  try{ var m=document.querySelector('main.main'); sessionStorage.setItem('dash_scroll', String(m ? m.scrollTop : window.scrollY)); }catch(e){}
   var av = document.querySelector('.view.active');
   if(av && av.id){ try{ sessionStorage.setItem('dash_view', av.id); }catch(e){} }
   location.reload();
@@ -93823,7 +93822,7 @@ if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', function(){
     try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
       if(v){ activateViewNow(v==='v-dash' ? 'dash' : 'tx'); }
-      if(s){ window.scrollTo(0, Number(s)); sessionStorage.removeItem('dash_scroll'); } sessionStorage.removeItem('dash_view');
+      if(s){ try{ var m=document.querySelector('main.main'); if(m) m.scrollTop=Number(s); else window.scrollTo(0, Number(s)); }catch(e){} sessionStorage.removeItem('dash_scroll'); } sessionStorage.removeItem('dash_view');
     }catch(e){} });
 } else {
   try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
@@ -97299,7 +97298,7 @@ async function saveEdit(){
 
 
 
-    if(r.status === 200){ for(var _i=0;_i<TX.length;_i++){ if(TX[_i].id===id){ TX[_i].tp=payload.tipe; TX[_i].t=payload.tanggal; TX[_i].k=payload.kategori; TX[_i].v=Number(String(payload.nominal).replace(/\./g,''))||0; TX[_i].c=payload.catatan; break; } } closeEdit(); showToast('✓ Perubahan tersimpan'); try{ loadTxAll(); }catch(e){} }
+    if(r.status === 200){ closeEdit(); showToast('✓ Perubahan tersimpan'); reloadPreserveScroll(); }
 
 
 
@@ -98115,7 +98114,7 @@ async function delTx(id){
 
 
 
-    if(r.status === 200){ try{ document.querySelectorAll('button[onclick*="delTx('+id+')"]').forEach(function(b){ var tr=b.closest('tr'); if(tr) tr.remove(); }); }catch(e){} TXDATA = TXDATA.filter(function(x){ return x.id !== id; }); showToast('✓ Transaksi dihapus'); }
+    if(r.status === 200){ showToast('✓ Transaksi dihapus'); reloadPreserveScroll(); }
 
 
 
