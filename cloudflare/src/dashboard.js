@@ -93713,7 +93713,7 @@ function qaAdd(kat, btn){
   fetch('/api/tx', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ teks: teks }), credentials:'same-origin' })
     .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {ok:r.status===200, j:j}; }); })
     .then(function(res){
-      if(res.ok){ showToast('✓ ' + (kat || 'Transaksi') + ' tersimpan'); if(inp) inp.value=''; setTimeout(function(){ reloadPreserveScroll(); }, 800); }
+      if(res.ok){ showToast('✓ ' + (kat || 'Transaksi') + ' tersimpan'); if(inp) inp.value=''; }
       else { var err=document.getElementById('txerr'); if(err){ err.textContent = res.j.err || 'Gagal menyimpan.'; } }
     })
     .catch(function(){ var err=document.getElementById('txerr'); if(err) err.textContent='Gagal menghubungi server.'; });
@@ -93726,6 +93726,22 @@ function reloadPreserveScroll(){
   location.reload();
 }
 window.reloadPreserveScroll = reloadPreserveScroll;
+(function(){
+  function injectStyle(){ try{ var s=document.createElement("style"); s.textContent=".rv{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease}.rv.in{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}"; document.head.appendChild(s); }catch(e){} }
+  function initReveal(){
+    injectStyle();
+    if(!('IntersectionObserver' in window)) return;
+    var els = document.querySelectorAll(".view .card, .view .chartbox, #cat");
+    if(!els.length) return;
+    try{
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
+      }, { threshold: 0.06, rootMargin: '0px 0px -40px 0px' });
+      for(var i=0;i<els.length;i++){ els[i].classList.add("rv"); io.observe(els[i]); }
+    }catch(e){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initReveal); else initReveal();
+})();
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', function(){
     try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
@@ -94281,7 +94297,7 @@ async function doTx(){
 
 
 
-    if(r.status === 200){ showToast('✓ Tersimpan'); setTimeout(function(){ reloadPreserveScroll(); }, 800); }
+    if(r.status === 200){ var t=document.getElementById('txin'); if(t) t.value=''; showToast('✓ Tersimpan'); try{ loadTxAll(); }catch(e){} }
 
 
 
@@ -97205,7 +97221,7 @@ async function saveEdit(){
 
 
 
-    if(r.status === 200){ reloadPreserveScroll(); }
+    if(r.status === 200){ closeEdit(); showToast('✓ Perubahan tersimpan'); try{ loadTxAll(); }catch(e){} }
 
 
 
@@ -98021,7 +98037,7 @@ async function delTx(id){
 
 
 
-    if(r.status === 200){ reloadPreserveScroll(); }
+    if(r.status === 200){ try{ document.querySelectorAll('button[onclick*="delTx('+id+')"]').forEach(function(b){ var tr=b.closest('tr'); if(tr) tr.remove(); }); }catch(e){} TXDATA = TXDATA.filter(function(x){ return x.id !== id; }); showToast('✓ Transaksi dihapus'); }
 
 
 
@@ -102586,7 +102602,7 @@ async function setBudget(){
 
 
 
-    if(r.status === 200){ showToast('✓ Budget tersimpan'); setTimeout(function(){ reloadPreserveScroll(); }, 800); }
+    if(r.status === 200){ showToast('✓ Budget tersimpan'); }
 
 
 
@@ -106326,7 +106342,7 @@ async function saveKat(){
 
 
 
-    if(r.status === 200){ reloadPreserveScroll(); }
+    if(r.status === 200){ showToast('✓ Tipe kategori diperbarui'); }
 
 
 
@@ -107686,7 +107702,7 @@ async function doDelAll(){
 
 
 
-    if(r.status === 200){ reloadPreserveScroll(); }
+    if(r.status === 200){ closeDelAll(); showToast('✓ Semua transaksi dihapus'); TXDATA = []; try{ filterTx(); }catch(e){} }
 
 
 
