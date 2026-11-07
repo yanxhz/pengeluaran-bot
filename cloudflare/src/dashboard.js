@@ -20737,6 +20737,7 @@ export async function handleDashboard(request, env) {
 
 
 
+  if (url.searchParams.get('json') === '1') return jsonOk(d);
   if (url.searchParams.get('view') === 'tahun') {
 
 
@@ -79735,7 +79736,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th><th style="text-align:right">Aksi</th></tr></thead><tbody>{TROWS}</tbody></table>
+        <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Catatan</th><th style="text-align:right">Nominal</th><th style="text-align:right">Aksi</th></tr></thead><tbody id="dashRecent">{TROWS}</tbody></table>
 
 
 
@@ -89464,7 +89465,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-const TX = {TXJSON};
+let TX = {TXJSON};
 
 
 
@@ -89738,7 +89739,7 @@ const OV = {OVJSON};
 
 
 
-const DAILY = {DAILYJSON};
+let DAILY = {DAILYJSON};
 
 
 
@@ -89806,7 +89807,7 @@ const DAILY = {DAILYJSON};
 
 
 
-const INC = {INCOMEJSON};
+let INC = {INCOMEJSON};
 
 
 
@@ -89874,7 +89875,7 @@ const INC = {INCOMEJSON};
 
 
 
-const CATS = {CATJSON};
+let CATS = {CATJSON};
 
 
 
@@ -93795,7 +93796,7 @@ function qaAdd(kat, btn){
   fetch('/api/tx', { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ teks: teks }), credentials:'same-origin' })
     .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {ok:r.status===200, j:j}; }); })
     .then(function(res){
-      if(res.ok){ showToast('✓ ' + (kat || 'Transaksi') + ' tersimpan'); if(inp) inp.value=''; try{ loadTxAll(); }catch(e){} }
+      if(res.ok){ showToast('✓ ' + (kat || 'Transaksi') + ' tersimpan'); if(inp) inp.value=''; try{ loadTxAll(); }catch(e){} try{ refreshDash(); }catch(e){} }
       else { var err=document.getElementById('txerr'); if(err){ err.textContent = res.j.err || 'Gagal menyimpan.'; } }
     })
     .catch(function(){ var err=document.getElementById('txerr'); if(err) err.textContent='Gagal menghubungi server.'; });
@@ -93808,6 +93809,91 @@ function reloadPreserveScroll(){
   location.reload();
 }
 window.reloadPreserveScroll = reloadPreserveScroll;
+
+/* ---------- refresh dashboard in-place (tanpa reload) ---------- */
+function dashByLbl(t){
+  var all=document.querySelectorAll('#v-dash .cards .card');
+  for(var i=0;i<all.length;i++){ var l=all[i].querySelector('.lbl'); if(l && l.textContent.trim()===t) return all[i]; }
+  return null;
+}
+function dashSetCard(t, valHtml, valCls, subHtml){
+  var c=dashByLbl(t); if(!c) return;
+  var v=c.querySelector('.val'); if(v){ v.className='val'+(valCls?' '+valCls:''); v.innerHTML=valHtml; }
+  if(subHtml!==undefined){ var s=c.querySelector('.sub2'); if(s) s.innerHTML=subHtml; }
+}
+function renderDashCards(d){
+  dashSetCard('Saldo bulan ini', d.monthNet>=0?fmtRp(d.monthNet):'−'+fmtRp(-d.monthNet), d.monthNet>=0?'inc':'exp',
+    d.saveRate!==null ? (d.saveRate>=0?'tabungan '+d.saveRate+'%':'defisit '+(-d.saveRate)+'%') : 'belum ada pemasukan');
+  dashSetCard('Pemasukan bulan ini', fmtRp(d.incomeTotal), 'inc',
+    d.incDelta===null?'—':(d.incDelta>=0?'▲ '+d.incDelta+'% vs bulan lalu':'▼ '+Math.abs(d.incDelta)+'% vs bulan lalu'));
+  dashSetCard('Pengeluaran bulan ini', fmtRp(d.expenseTotal), 'exp',
+    d.expDelta===null?'—':(d.expDelta>=0?'▲ '+d.expDelta+'% dibanding bulan lalu (Rp '+fmtRp(d.prevExp)+')':'▼ '+Math.abs(d.expDelta)+'% dibanding bulan lalu (Rp '+fmtRp(d.prevExp)+')'));
+  dashSetCard('Pengeluaran hari ini', fmtRp(d.todayExp), 'exp', 'hari ini');
+  var rc = d.remainBudget===null?'p':(d.remainBudget>=0?'inc':'exp');
+  dashSetCard('Sisa budget', d.remainBudget===null?'—':fmtRp(d.remainBudget), rc,
+    'target '+(d.budgetNom===null?'belum diset':fmtRp(d.budgetNom)));
+  var bp = d.budgetNom ? Math.min(100, Math.round((d.expenseTotal/d.budgetNom)*100)) : 0;
+  var bm = document.querySelector('#v-dash .cards .card:nth-child(5) .budmini');
+  if(bm){ bm.className='budmini'+(d.budgetNom&&d.expenseTotal>d.budgetNom?' over':(d.budgetNom&&d.expenseTotal>=d.budgetNom*0.8?' warn':'')); var f=bm.querySelector('div'); if(f) f.style.width=bp+'%'; }
+  dashSetCard('Transaksi bulan ini', String(d.txCount), '', 'rata2 '+fmtRp(d.avgDaily||0)+'/hari');
+}
+function nectarNeedsChips(a){ return (a&&a.length)? a.map(function(k){return '<span class="nw-chip">'+escH(k)+'</span>';}).join('') : ''; }
+function renderDashNeeds(d){
+  var el=document.getElementById('needsBody'); if(!el) return;
+  var tot=d.needsTotal+d.wantsTotal;
+  var np=tot>0?Math.round((d.needsTotal/tot)*100):0; var wp=100-np;
+  el.innerHTML = '<div class="bud"><div class="budrow"><span>Kebutuhan</span><b>'+fmtRp(d.needsTotal)+'</b></div>' +
+    '<div class="nw-cats">'+nectarNeedsChips(d.needsCats)+'</div>' +
+    '<div class="nw-bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#38BDF8,#22C55E)" class="nw-fill">'+np+'%</div></div>' +
+    '<div class="budrow"><span>Keinginan</span><b>'+fmtRp(d.wantsTotal)+'</b></div>' +
+    '<div class="nw-cats">'+nectarNeedsChips(d.wantsCats)+'</div>' +
+    '<div class="nw-bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#F59E0B,#F87171)" class="nw-fill">'+wp+'%</div></div>' +
+    '</div>';
+}
+function renderDashBudget(d){
+  var el=document.getElementById('budBody'); if(!el) return;
+  if(d.budgetNom===null){ el.innerHTML='<div class="mut">Belum ada budget untuk bulan ini.</div>'; return; }
+  var used=d.expenseTotal; var bp=Math.min(100,Math.round((used/d.budgetNom)*100));
+  var over=used>d.budgetNom; var warn=!over && used>=d.budgetNom*0.8;
+  var remain=d.remainBudget;
+  el.innerHTML = '<div class="budrow"><span>Target</span><b>'+fmtRp(d.budgetNom)+'</b></div>' +
+    '<div class="budrow"><span>Terpakai</span><b>'+fmtRp(used)+'</b></div>' +
+    '<div class="bar '+(over||warn?'warn':'')+'"><div style="width:'+bp+'%"></div></div>' +
+    '<div class="budrow"><span>'+bp+'% terpakai</span><span class="'+(over?'over':(warn?'warn':''))+'">'+
+    (remain>=0?'Sisa '+fmtRp(remain):'Lebih '+fmtRp(-remain))+'</span></div>';
+}
+function renderDashInsights(d){
+  var el=document.getElementById('insightBody'); if(!el) return;
+  el.innerHTML = (d.insights||[]).map(function(s){ return '<div class="insight">'+escH(s)+'</div>'; }).join('');
+}
+function renderDashRecent(d){
+  var tb=document.getElementById('dashRecent'); if(!tb) return;
+  var empty=document.getElementById('dxempty');
+  var rows=(d.tx||[]).slice(0,10);
+  if(!rows.length){ tb.innerHTML=''; if(empty) empty.classList.remove('hidden'); return; }
+  if(empty) empty.classList.add('hidden');
+  tb.innerHTML = rows.map(function(x){
+    var chip = x.tp==='masuk' ? '<span class="chip i">Masuk</span>' : '<span class="chip k">Keluar</span>';
+    var cls = x.tp==='masuk' ? 'amt inc' : 'amt';
+    return '<tr><td class="mut">'+escH(String(x.t).slice(5).replace('-','/'))+'</td><td>'+chip+'</td><td>'+escH(x.k)+'</td><td class="mut">'+escH(x.c)+'</td><td class="'+cls+'">'+fmtRp(x.v)+'</td><td class="ra"><button class="ra-btn" onclick="openEdit('+x.id+')">Ubah</button> <button class="ra-btn danger" onclick="delTx('+x.id+')">Hapus</button></td></tr>';
+  }).join('');
+}
+async function refreshDash(){
+  try{
+    var r=await fetch('/dashboard?json=1', {credentials:'same-origin'});
+    var j=await r.json().catch(function(){return {};});
+    if(!j.ok) return;
+    DAILY=j.dayExpArr||[]; INC=j.dayIncArr||[]; CATS=(j.catArr||[]).map(function(c){return {k:c.k,v:c.v};});
+    TX=j.tx||[];
+    renderDashCards(j);
+    try{ drawCharts(); }catch(e){}
+    renderDashBudget(j);
+    renderDashNeeds(j);
+    renderDashInsights(j);
+    renderDashRecent(j);
+  }catch(e){}
+}
+window.refreshDash=refreshDash;
 (function(){
   function injectStyle(){ try{ var s=document.createElement("style"); s.textContent=".rv{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease}.rv.in{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}"; document.head.appendChild(s); }catch(e){} }
   function initReveal(){
@@ -94382,7 +94468,7 @@ async function doTx(){
 
 
 
-    if(r.status === 200){ var t=document.getElementById('txin'); if(t) t.value=''; showToast('✓ Tersimpan'); try{ loadTxAll(); }catch(e){} }
+    if(r.status === 200){ var t=document.getElementById('txin'); if(t) t.value=''; showToast('✓ Tersimpan'); try{ loadTxAll(); }catch(e){} try{ refreshDash(); }catch(e){} }
 
 
 
@@ -97307,7 +97393,7 @@ async function saveEdit(){
 
 
 
-    if(r.status === 200){ closeEdit(); showToast('✓ Perubahan tersimpan'); reloadPreserveScroll(); }
+    if(r.status === 200){ closeEdit(); showToast('✓ Perubahan tersimpan'); try{ loadTxAll(); }catch(e){} refreshDash(); }
 
 
 
@@ -98123,7 +98209,7 @@ async function delTx(id){
 
 
 
-    if(r.status === 200){ showToast('✓ Transaksi dihapus'); reloadPreserveScroll(); }
+    if(r.status === 200){ showToast('✓ Transaksi dihapus'); try{ loadTxAll(); }catch(e){} refreshDash(); }
 
 
 
