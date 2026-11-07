@@ -71681,10 +71681,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
  .budrow{display:flex;justify-content:space-between;font-size:13px;color:var(--tx);margin:3px 0;font-weight:600}
  .nw-cats{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
  .nw-chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--card);border:2px solid var(--tx)}
- .nw-trackwrap{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
- .nw-bar{flex:1;height:24px;background:var(--card);border:2px solid var(--tx);border-radius:999px;overflow:hidden}
- .nw-fill{height:100%;border-radius:999px}
- .nw-pct{flex:none;min-width:52px;text-align:right;font-weight:800;font-size:12.5px}
+ .nw-bar{height:24px;background:var(--card);border:2px solid var(--tx);border-radius:999px;overflow:hidden;margin:4px 0 12px}
+ .nw-fill{display:flex;align-items:center;justify-content:center;height:100%;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
 
 
 
@@ -111698,7 +111696,7 @@ function needsBodyHtml(d){
 
 
 
-    '<div class="nw-trackwrap"><div class="nw-bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#38BDF8,#22C55E)" class="nw-fill"></div></div><span class="nw-pct">'+np+'%</span></div>' +
+    '<div class="nw-bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#38BDF8,#22C55E)" class="nw-fill">'+np+'%</div></div>' +
 
 
 
@@ -111835,7 +111833,7 @@ function needsBodyHtml(d){
 
 
 
-    '<div class="nw-trackwrap"><div class="nw-bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#F59E0B,#F87171)" class="nw-fill"></div></div><span class="nw-pct">'+wp+'%</span></div>' +
+    '<div class="nw-bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#F59E0B,#F87171)" class="nw-fill">'+wp+'%</div></div>' +
 
 
 
