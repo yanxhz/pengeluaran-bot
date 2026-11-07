@@ -75708,7 +75708,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
         <button class="qa-chip" onclick="qaAdd('lainnya',this)">📦 Lainnya</button>
         <input id="qaIn" class="inp qa-inp" type="text" inputmode="numeric" placeholder="nominal, cth 15000" onkeydown="if(event.key==='Enter')qaAdd('',document.querySelector('.qa-chip'))">
         <button class="mic-btn" data-target="qaIn" onclick="voiceInput(this)" title="Coba bicara">🎤</button>
-        <button class="qa-btn" onclick="qaAdd('',document.querySelector('.qa-chip'))">Catat</button>      </div>
+      </div>
       <div class="cards">
 
 
