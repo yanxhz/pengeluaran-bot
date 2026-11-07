@@ -64522,6 +64522,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
  --yellow:#9B8420;--pink:#8E4A5E;--mint:#3B7A66;--shadow:6px 6px 0 #0B0A0F}
+[data-theme="dark"] .quickadd .qa-chip{background:var(--card);border-color:var(--yellow);color:var(--yellow)}[data-theme="dark"] th{background:var(--card);color:var(--yellow)}[data-theme="dark"] .panel h2,[data-theme="dark"] .modal h3{background:transparent;border-color:var(--yellow);color:var(--yellow)}
 
 
 
