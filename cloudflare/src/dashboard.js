@@ -75920,6 +75920,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
         <div class="card"><div class="lbl">Pengeluaran</div><div class="val exp">{TOTAL}</div><div class="sub2">{DELTA}</div></div>
+        <div class="card"><div class="lbl">Pengeluaran hari ini</div><div class="val exp">{TODAY}</div><div class="sub2">hari ini</div></div>
 
 
 
@@ -116921,6 +116922,7 @@ function html(url, bulan, chatId, d, uname) {
 
 
     .split('{TOTAL}').join(rp(d.expenseTotal))
+    .split('{TODAY}').join(rp(d.todayExp))
 
 
 
