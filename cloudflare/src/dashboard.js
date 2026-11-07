@@ -34987,6 +34987,12 @@ export async function handleAddTx(request, env) {
 
   if (!parsed) return jsonErr(400, "Format tidak paham. Contoh: 'makan 15000' atau '+gaji 5000000'.");
 
+  // Deteksi pemasukan dari kata kunci (biar voice/natural language kebaca sebagai masuk)
+  if (tipe === 'keluar') {
+    const kw = /(^|\s)(gaji|bonus|pemasukan|pendapatan|uang masuk|cashback|hadiah|dividen|penjualan|bisnis|rezeki|thr|honor|angpao|warisan)(\s|$)/i;
+    if (kw.test(parsed.kategori + ' ' + parsed.catatan)) tipe = 'masuk';
+  }
+
 
 
 
