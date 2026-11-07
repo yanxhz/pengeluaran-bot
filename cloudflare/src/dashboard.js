@@ -78231,6 +78231,12 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
+        <div class="animal-stage" aria-hidden="true">
+          <span class="anim a1">🦊</span>
+          <span class="anim a2">🐻</span>
+          <span class="anim a3">🐰</span>
+          <span class="anim a4">🐢</span>
+        </div>
       </div>
 
 
@@ -90381,6 +90387,7 @@ window.normalizeVoice = normalizeVoice;
 (function(){ try{ if(!document.getElementById('micstyle')){ var s=document.createElement('style'); s.id='micstyle'; s.textContent='.mic-btn{cursor:pointer;border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-size:16px;border-radius:10px;padding:0 10px;line-height:1;box-shadow:3px 3px 0 var(--tx);transition:.12s;flex:none}.mic-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tx)}.mic-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}.mic-btn.rec{animation:micpulse 1s ease-in-out infinite}@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 10px rgba(255,60,60,0)}}[data-theme="dark"] .mic-btn{background:var(--card);border-color:var(--yellow);color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){}
 })();
 window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('micstyle')){ var s=document.createElement('style'); s.id='micstyle'; s.textContent='.mic-btn{cursor:pointer;border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-size:16px;border-radius:10px;padding:0 10px;line-height:1;box-shadow:3px 3px 0 var(--tx);transition:.12s;flex:none}.mic-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tx)}.mic-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}.mic-btn.rec{animation:micpulse 1s ease-in-out infinite}@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 10px rgba(255,60,60,0)}}[data-theme="dark"] .mic-btn{background:var(--card);border-color:var(--yellow);color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
+window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('animstyle')){ var s=document.createElement('style'); s.id='animstyle'; s.textContent='.animal-stage{position:relative;height:64px;overflow:hidden;margin-top:10px;border:2px dashed var(--tx);border-radius:12px;;background:var(--card);opacity:.85}.anim{position:absolute;bottom:6px;font-size:26px;line-height:1;will-change:transform}.a1{animation:walk 9s linear infinite}.a2{animation:walk 13s linear infinite 1.2s}.a3{animation:walk 11s linear infinite 2.4s}.a4{animation:walk 15s linear infinite .6s}@keyframes walk{0%{left:-8%;transform:scaleX(1)}49%{transform:scaleX(1)}50%{left:102%;transform:scaleX(-1)}99%{transform:scaleX(-1)}100%{left:-8%;transform:scaleX(1)}}[data-theme="dark"] .animal-stage{background:var(--elev,#2c2730);border-color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
 
 
 
