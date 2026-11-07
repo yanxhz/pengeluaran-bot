@@ -90403,7 +90403,7 @@ if(document.readyState==="loading") document.addEventListener("DOMContentLoaded"
 // sprite hewan dinormalisasi (10 hewan x 6 frame) [idx, frameW, h]
 function buildAnimalStage(){
   var st=document.getElementById('animalStage'); if(!st) return;
-  var gifs=["gif1.gif","gif2.gif","gif3.gif","gif4.gif"];
+  var gifs=["gif1.webp","gif2.webp","gif3.webp","gif4.webp"];
   for(var i=0;i<gifs.length;i++){
     var d=document.createElement("span"); d.className="anim a"+(i+1);
     var im=document.createElement("img"); im.src="/"+gifs[i]; im.alt="";
