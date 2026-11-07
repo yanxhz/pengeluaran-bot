@@ -94842,6 +94842,7 @@ function findTx(id){
 
 
   for(var i=0;i<TX.length;i++) if(TX[i].id === id) return TX[i];
+  for(var j=0;j<TXDATA.length;j++){ var _x=TXDATA[j]; if(_x.id===id) return { id:_x.id, tp:_x.tipe||'keluar', t:_x.tanggal, k:_x.kategori, v:_x.nominal, c:_x.catatan||'' }; }
 
 
 
