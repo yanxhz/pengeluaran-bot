@@ -90319,7 +90319,17 @@ function voiceInput(btn){
   var rec = new SR(); rec.lang='id-ID'; rec.maxAlternatives=1; rec.interimResults=false; rec.continuous=false;
   rec.onstart=function(){ btn.classList.add('rec'); showToast('🎤 Mendengarkan…'); };
   rec.onend=function(){ btn.classList.remove('rec'); };
-  rec.onresult=function(e){ var txt=e.results[0][0].transcript||''; var norm=normalizeVoice(txt); inp.value=norm; showToast('✓ "'+norm+'"'); inp.focus(); };
+  rec.onresult=function(e){
+    var txt=e.results[0][0].transcript||'';
+    var norm=normalizeVoice(txt);
+    if(!norm){ showToast('⚠ Tidak ada teks terdeteksi'); return; }
+    inp.value=norm;
+    var hasNum=/\\d/.test(norm);
+    if(!hasNum){ showToast('⚠ Cek teks lalu lengkapi angkanya'); inp.focus(); return; }
+    var tgt=btn.getAttribute('data-target');
+    if(tgt==='qaIn'){ if(window.qaAdd){ qaAdd('', document.querySelector('.qa-chip')); } else { showToast('✓ "'+norm+'"'); } }
+    else { if(window.doTx){ doTx(); } else { showToast('✓ "'+norm+'"'); } }
+  };
   rec.onerror=function(e){ btn.classList.remove('rec'); var m={'not-allowed':'Izinkan mikrofon dulu','network':'Gagal terhubung ke layanan suara','no-speech':'Tidak terdengar suara','audio-capture':'Mikrofon tidak terdeteksi','service-not-allowed':'Layanan suara diblokir'}[e.error] || ('Voice error: '+e.error); showToast('⚠ '+m); };
   try{ rec.start(); }catch(err){ showToast('⚠ '+err.message); }
 }
