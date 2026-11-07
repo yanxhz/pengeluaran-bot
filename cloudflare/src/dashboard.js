@@ -65657,7 +65657,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
-  background:var(--bg);color:var(--tx);height:100vh;overflow:hidden}
+  background:var(--bg);color:var(--tx);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior-y:none}
+html{overscroll-behavior-y:none} .main{overscroll-behavior-y:none}
 
 
 
@@ -65725,7 +65726,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
- .app{display:flex;height:100vh}
+ .app{display:flex;height:100vh;height:100dvh}
 
 
 
