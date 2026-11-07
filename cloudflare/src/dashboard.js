@@ -78231,7 +78231,6 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <div class="animal-stage" id="animalStage" aria-hidden="true"></div>
       </div>
 
 
@@ -90384,34 +90383,6 @@ window.normalizeVoice = normalizeVoice;
 window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('micstyle')){ var s=document.createElement('style'); s.id='micstyle'; s.textContent='.mic-btn{cursor:pointer;border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-size:16px;border-radius:10px;padding:0 10px;line-height:1;box-shadow:3px 3px 0 var(--tx);transition:.12s;flex:none}.mic-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tx)}.mic-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}.mic-btn.rec{animation:micpulse 1s ease-in-out infinite}@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 10px rgba(255,60,60,0)}}[data-theme="dark"] .mic-btn{background:var(--card);border-color:var(--yellow);color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
 // sprite hewan (dipotong dari png hewan.png: 10 baris x 6 frame)
 var ANIMAL_SPRITES=[[0,24],[1,23],[2,19],[3,21],[4,22],[5,23],[6,22],[7,17],[8,22],[9,21]];
-function buildAnimalStage(){
-  var st=document.getElementById('animalStage'); if(!st) return;
-  var css="";
-  for(var i=0;i<ANIMAL_SPRITES.length;i++){
-    var idx=ANIMAL_SPRITES[i][0], h=ANIMAL_SPRITES[i][1];
-    var eh=h*2, ew=48, stripW=ew*6;
-    var d=document.createElement("span"); d.className="anim a"+(i+1);
-    var s=document.createElement("span"); s.className="spr";
-    s.style.width=ew+"px"; s.style.height=eh+"px";
-    s.style.backgroundImage="url('/animal"+idx+".png')";
-    s.style.backgroundSize=stripW+"px "+eh+"px";
-    s.style.backgroundPosition="0 0";
-    d.appendChild(s); st.appendChild(d);
-  }
-}
-if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", buildAnimalStage); else buildAnimalStage();
-// sprite hewan dinormalisasi (10 hewan x 6 frame) [idx, frameW, h]
-function buildAnimalStage(){
-  var st=document.getElementById('animalStage'); if(!st) return;
-  var gifs=["gif1.webp","gif2.webp","gif3.webp","gif4.webp"];
-  for(var i=0;i<gifs.length;i++){
-    var d=document.createElement("span"); d.className="anim a"+(i+1);
-    var im=document.createElement("img"); im.src="/"+gifs[i]; im.alt="";
-    d.appendChild(im); st.appendChild(d);
-  }
-}
-if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", buildAnimalStage); else buildAnimalStage();
-window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('animstyle')){ var s=document.createElement('style'); s.id='animstyle'; s.textContent='.animal-stage{position:relative;height:64px;margin-top:4px;overflow:hidden;pointer-events:none}.anim{position:absolute;bottom:4px;display:inline-block}.anim img{display:block;height:54px;width:auto;max-width:120px}.a1{animation:walk 24s linear infinite}.a2{animation:walk 30s linear infinite 3s}.a3{animation:walk 26s linear infinite 6s}.a4{animation:walk 34s linear infinite 9s}@keyframes walk{0%{left:-6%;transform:scaleX(1)}49.9%{left:100%;transform:scaleX(1)}50%{left:100%;transform:scaleX(-1)}99.9%{left:-6%;transform:scaleX(-1)}100%{left:-6%;transform:scaleX(1)}}'; document.head.appendChild(s); } }catch(e){} });
 
 
 
