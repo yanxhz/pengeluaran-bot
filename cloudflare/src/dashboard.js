@@ -78231,12 +78231,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <div class="animal-stage" aria-hidden="true">
-          <span class="anim a1"><span class="aw"><span class="ab">🦊</span></span><span class="ash"></span></span>
-          <span class="anim a2"><span class="aw"><span class="ab">🐻</span></span><span class="ash"></span></span>
-          <span class="anim a3"><span class="aw"><span class="ab">🐰</span></span><span class="ash"></span></span>
-          <span class="anim a4"><span class="aw"><span class="ab">🐢</span></span><span class="ash"></span></span>
-        </div>
+        <div class="animal-stage" id="animalStage" aria-hidden="true"></div>
       </div>
 
 
@@ -90387,7 +90382,25 @@ window.normalizeVoice = normalizeVoice;
 (function(){ try{ if(!document.getElementById('micstyle')){ var s=document.createElement('style'); s.id='micstyle'; s.textContent='.mic-btn{cursor:pointer;border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-size:16px;border-radius:10px;padding:0 10px;line-height:1;box-shadow:3px 3px 0 var(--tx);transition:.12s;flex:none}.mic-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tx)}.mic-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}.mic-btn.rec{animation:micpulse 1s ease-in-out infinite}@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 10px rgba(255,60,60,0)}}[data-theme="dark"] .mic-btn{background:var(--card);border-color:var(--yellow);color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){}
 })();
 window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('micstyle')){ var s=document.createElement('style'); s.id='micstyle'; s.textContent='.mic-btn{cursor:pointer;border:2px solid var(--tx);background:var(--yellow);color:var(--tx);font-size:16px;border-radius:10px;padding:0 10px;line-height:1;box-shadow:3px 3px 0 var(--tx);transition:.12s;flex:none}.mic-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tx)}.mic-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tx)}.mic-btn.rec{animation:micpulse 1s ease-in-out infinite}@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 10px rgba(255,60,60,0)}}[data-theme="dark"] .mic-btn{background:var(--card);border-color:var(--yellow);color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
-window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('animstyle')){ var s=document.createElement('style'); s.id='animstyle'; s.textContent='.animal-stage{position:relative;height:72px;overflow:hidden;margin-top:10px;border:2px dashed var(--tx);border-radius:12px;background:var(--card);opacity:.94}.anim{position:absolute;bottom:10px;display:inline-block;width:48px}.aw{display:block;animation:hop .55s ease-in-out infinite;transform-origin:50% 100%}.ab{display:block;font-size:36px;line-height:1;text-align:center;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.18))}.ash{display:block;width:30px;height:7px;margin:2px auto 0;background:radial-gradient(ellipse at center, rgba(0,0,0,.28), transparent 70%);border-radius:50%;animation:shscale .55s ease-in-out infinite}@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}@keyframes shscale{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.75)}}.a1{animation:walk 9s linear infinite}.a2{animation:walk 13s linear infinite 1.2s}.a3{animation:walk 11s linear infinite 2.4s}.a4{animation:walk 15s linear infinite .6s}@keyframes walk{0%{left:-8%;transform:scaleX(1)}49%{transform:scaleX(1)}50%{left:102%;transform:scaleX(-1)}99%{transform:scaleX(-1)}100%{left:-8%;transform:scaleX(1)}}[data-theme="dark"] .animal-stage{background:var(--elev,#2c2730);border-color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
+// sprite hewan (dipotong dari png hewan.png: 10 baris x 6 frame)
+var ANIMAL_SPRITES=[[0,24],[1,23],[2,19],[3,21],[4,22],[5,23],[6,22],[7,17],[8,22],[9,21]];
+function buildAnimalStage(){
+  var st=document.getElementById('animalStage'); if(!st) return;
+  var css="";
+  for(var i=0;i<ANIMAL_SPRITES.length;i++){
+    var idx=ANIMAL_SPRITES[i][0], h=ANIMAL_SPRITES[i][1];
+    var eh=h*2, ew=48, stripW=ew*6;
+    var d=document.createElement("span"); d.className="anim a"+(i+1);
+    var s=document.createElement("span"); s.className="spr";
+    s.style.width=ew+"px"; s.style.height=eh+"px";
+    s.style.backgroundImage="url('/animal"+idx+".png')";
+    s.style.backgroundSize=stripW+"px "+eh+"px";
+    s.style.backgroundPosition="0 0";
+    d.appendChild(s); st.appendChild(d);
+  }
+}
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", buildAnimalStage); else buildAnimalStage();
+window.addEventListener('DOMContentLoaded', function(){ try{ if(!document.getElementById('animstyle')){ var s=document.createElement('style'); s.id='animstyle'; s.textContent='.animal-stage{position:relative;height:84px;overflow:hidden;margin-top:10px;border:2px dashed var(--tx);border-radius:12px;background:var(--card);opacity:.95;display:flex;align-items:flex-end;justify-content:flex-start}.anim{position:absolute;bottom:10px;display:inline-block}.spr{display:block;image-rendering:pixelated;animation:frames .6s steps(6,end) infinite}@keyframes frames{from{background-position:0 0}to{background-position:-240px 0}}.a1{animation:walk 9s linear infinite}.a2{animation:walk 13s linear infinite 1.2s}.a3{animation:walk 11s linear infinite 2.4s}.a4{animation:walk 15s linear infinite .6s}.a5{animation:walk 10s linear infinite 2s}.a6{animation:walk 14s linear infinite .9s}.a7{animation:walk 12s linear infinite 1.7s}.a8{animation:walk 16s linear infinite 1.4s}.a9{animation:walk 10.5s linear infinite 2.8s}.a10{animation:walk 13.5s linear infinite .3s}@keyframes walk{0%{left:-8%;transform:scaleX(1)}49%{transform:scaleX(1)}50%{left:102%;transform:scaleX(-1)}99%{transform:scaleX(-1)}100%{left:-8%;transform:scaleX(1)}}[data-theme="dark"] .animal-stage{background:var(--elev,#2c2730);border-color:var(--yellow)}'; document.head.appendChild(s); } }catch(e){} });
 
 
 
