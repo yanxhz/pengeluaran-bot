@@ -12253,6 +12253,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 }
 
 
+
+/* ═══ NEUMORPHISM: cursor pointer bottom-nav ═══ */
+.bnav button{cursor:pointer!important}
+
+
 </style>
 
 <script>
@@ -61068,6 +61073,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 }
 
 
+
+/* ═══ NEUMORPHISM: cursor pointer bottom-nav ═══ */
+.bnav button{cursor:pointer!important}
+
+
 </style>
 
 <script>
@@ -74871,6 +74881,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .theme-toggle.greet-toggle{
   position:absolute!important;top:12px!important;right:12px!important;bottom:auto!important;left:auto!important;margin:0;
 }
+
+
+
+/* ═══ NEUMORPHISM: cursor pointer bottom-nav ═══ */
+.bnav button{cursor:pointer!important}
 
 
 </style>
