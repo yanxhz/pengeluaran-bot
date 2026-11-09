@@ -12258,6 +12258,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .bnav button{cursor:pointer!important}
 
 
+
+/* ═══ NEUMORPHISM: toggle login di pojok kanan-atas (keluar dari flow) ═══ */
+body > .theme-toggle{position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
+
+
 </style>
 
 <script>
@@ -61078,6 +61083,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .bnav button{cursor:pointer!important}
 
 
+
+/* ═══ NEUMORPHISM: toggle login di pojok kanan-atas (keluar dari flow) ═══ */
+body > .theme-toggle{position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
+
+
 </style>
 
 <script>
@@ -74886,6 +74896,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: cursor pointer bottom-nav ═══ */
 .bnav button{cursor:pointer!important}
+
+
+
+/* ═══ NEUMORPHISM: toggle login di pojok kanan-atas (keluar dari flow) ═══ */
+body > .theme-toggle{position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
 
 
 </style>
