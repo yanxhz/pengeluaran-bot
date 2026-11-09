@@ -69271,7 +69271,11 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
- }
+ 
+   .qa-chip,.chip,.quickadd button,.mic-btn,.cbtn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+   .mic-btn{min-width:44px}
+   .bnav button{min-height:56px}
+}
 
 
 
@@ -72431,7 +72435,10 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
- .modal{background:var(--card);border:3px solid var(--tx);border-radius:18px;padding:26px;width:100%;max-width:420px;box-shadow:8px 8px 0 var(--tx);animation:pop .22s cubic-bezier(.34,1.56,.64,1)} 
+ .modal{background:var(--card);border:3px solid var(--tx);border-radius:18px;padding:26px;width:100%;max-width:420px;box-shadow:8px 8px 0 var(--tx);animation:pop .22s cubic-bezier(.34,1.56,.64,1)}
+#ovTx .modal{position:relative}
+#ovTx .tx-x{position:absolute;top:10px;right:10px;width:32px;height:32px;border:0;background:transparent;color:var(--mut);font-size:18px;font-weight:800;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;z-index:2}
+#ovTx .tx-x:hover{background:var(--elev);color:var(--tx)} 
 
 
 
@@ -73603,6 +73610,9 @@ to{transform:scale(1);opacity:1}}
 .cmp-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;border:2px solid var(--tx);background:var(--card);margin-top:8px}
 .cmp-chip.up{color:var(--inc)}
 .cmp-chip.down{color:var(--exp)}
+
+/* aksesibilitas: focus ring terlihat */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--p);outline-offset:2px}
 </style><script>
 
 
@@ -83279,6 +83289,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
     <h3>＋ Catat transaksi</h3>
+    <button class="tx-x" aria-label="Tutup" onclick="closeTx()">✕</button>
 
 
 
