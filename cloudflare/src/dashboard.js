@@ -12260,7 +12260,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 
 /* ═══ NEUMORPHISM: toggle login di pojok kanan-atas (keluar dari flow) ═══ */
-body > .theme-toggle{position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
+.theme-toggle:not(.side):not(.greet-toggle){position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
 
 
 </style>
@@ -61085,7 +61085,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 
 /* ═══ NEUMORPHISM: toggle login di pojok kanan-atas (keluar dari flow) ═══ */
-body > .theme-toggle{position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
+.theme-toggle:not(.side):not(.greet-toggle){position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
 
 
 </style>
@@ -74900,7 +74900,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 
 /* ═══ NEUMORPHISM: toggle login di pojok kanan-atas (keluar dari flow) ═══ */
-body > .theme-toggle{position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
+.theme-toggle:not(.side):not(.greet-toggle){position:fixed!important;top:14px!important;right:14px!important;left:auto!important;bottom:auto!important;margin:0!important;z-index:999}
 
 
 </style>
