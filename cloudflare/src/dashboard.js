@@ -9921,6 +9921,11 @@ function loginPage(code, botUsername) {
 
 
  body{font-family:"Space Grotesk",system-ui,"Segoe UI",Inter,sans-serif;background:var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px}
+.card{box-sizing:border-box;max-width:100%;max-height:calc(100vh - 40px);overflow-y:auto}
+@media (max-width:480px){body{padding:12px}.card{padding:24px}}
+.card .panel{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0}
+
+
 
 
 
@@ -11824,34 +11829,459 @@ function loginPage(code, botUsername) {
 
 
 
-</style><script>
 
+/* ═══ NEUMORPHISM PUTIH: design system ═══ */
+:root{
+  --neu-bg:#E3E7EE;
+  --neu-bg-hover:#ECF0F5;
+  --neu-dark:rgba(163,177,198,.55);
+  --neu-dark-soft:rgba(163,177,198,.42);
+  --neu-dark-soft:rgba(163,177,198,.40);
+  --neu-light:rgba(255,255,255,.9);
+  --neu-red:18px;
+  --neu-red-sm:13px;
+  --neu-red-pill:999px;
+  --neu-text:#3A4256;
+  --neu-muted:#7B8794;
+  --neu-accent:#5B7AEA;
+  --neu-inc:#3FA873;
+  --neu-exp:#E06A6A;
+  --neu-warn:#D99A2B;
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg);
+  --tx:var(--neu-text);--mut:var(--neu-muted);
+  --p:var(--neu-accent);--p2:#7B93EE;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --line:rgba(120,135,160,.18);--pline:rgba(91,122,234,.35);
+  --shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light);
+}
+body{background:var(--neu-bg)!important;color:var(--neu-text)!important}
+h1,h2,h3{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--neu-text)!important}
+
+/* permukaan kaca -> neumorphic raised */
+.card,.panel,.side,.bnav,.modal,.greet-card,.insight,.topcat,.big,.big2,.m.top,.quickadd,.bud,.budmini,.budrow,.nw-bar{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red)!important;
+  color:var(--neu-text)!important;
+  box-shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light)!important;
+}
+.card:hover,.panel:hover,.topcat:hover,.row:hover{
+  background:var(--neu-bg-hover)!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+
+/* tombol ber-raise */
+.btn,.btn.primary,.big2,.seg button,.tabs button,.cbtn,.ra-btn,.mic-btn,.qa-chip,.chip,.nw-chip,.theme-toggle,.nv,.bnav button,.stat-card-btn,.btn-icon-circle,.btn-icon-square,.empty-btn{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red-sm)!important;
+  box-shadow:6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light)!important;
+  color:var(--neu-text)!important;
+  transition:background .2s, box-shadow .2s, transform .12s;
+}
+.btn:hover,.btn.primary:hover,.big2:hover,.cbtn:hover,.ra-btn:hover,.mic-btn:hover,.nv:hover,.bnav button:hover,.theme-toggle:hover{
+  background:var(--neu-bg-hover)!important;
+  box-shadow:6px 6px 14px var(--neu-dark-soft), -6px -6px 14px var(--neu-light)!important;
+  transform:none!important;
+}
+.btn:active,.btn.primary:active,.big2:active,.cbtn:active,.ra-btn:active,.mic-btn:active,.nv:active,.bnav button:active,.theme-toggle:active,.chip:active,.qa-chip:active{
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light)!important;
+}
+/* tombol utama aksen */
+.btn.primary,.big2{
+  background:linear-gradient(145deg,var(--neu-bg),#D7DCE6)!important;
+}
+.qa-chip,.chip{font-weight:700}
+.chip.k{color:var(--neu-accent)!important}
+.chip.i,.chip.inc{color:var(--neu-inc)!important}
+.chip.exp{color:var(--neu-exp)!important}
+
+/* input inset */
+input[type],textarea,.field input,.qa-inp,select.inp{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red-sm)!important;
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light)!important;
+  color:var(--neu-text)!important;
+}
+input[type]:focus,textarea:focus,.field input:focus{
+  outline:none;
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light), 0 0 0 3px rgba(91,122,234,.25)!important;
+}
+
+/* tabel & baris */
+th{background:transparent!important;color:var(--neu-muted)!important;border-bottom:1px solid rgba(120,135,160,.2)!important}
+td,.row{border-bottom:1px solid rgba(120,135,160,.14)!important;color:var(--neu-text)!important}
+
+/* bar progress inset */
+.bud .bar,.catrow .track,.tm-bar .track,.tm-track{
+  background:var(--neu-bg)!important;
+  box-shadow:inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light)!important;
+  border-radius:var(--neu-red-pill)!important;overflow:hidden;
+}
+.bud .bar div,.catrow .track div,.tm-bar .track div,.tm-fill,.nw-fill div{
+  background:linear-gradient(90deg,var(--neu-accent),#7B93EE)!important;
+  border-radius:var(--neu-red-pill);
+}
+.nw-fill{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);font-weight:800}
+
+.bud .bar.warn div{background:linear-gradient(90deg,var(--neu-warn),var(--neu-exp))!important}
+
+/* segmen & tabs: aktif inset */
+.seg,.tabs{background:var(--neu-bg)!important;border:none!important;border-radius:var(--neu-red)!important;
+  box-shadow:inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light)!important;padding:5px}
+.seg button,.tabs button{background:transparent!important;box-shadow:none!important;color:var(--neu-muted)!important}
+.seg button.on,.tabs button.on{
+  background:var(--neu-bg-hover)!important;
+  color:var(--neu-accent)!important;
+  box-shadow:6px 6px 12px var(--neu-dark), -6px -6px 12px var(--neu-light)!important;
+}
+
+/* modal */
+.modal{background:var(--neu-bg)!important;border:none!important;border-radius:22px!important;
+  box-shadow:20px 20px 45px var(--neu-dark), -20px -20px 45px var(--neu-light)!important}
+
+/* warna angka */
+.val,.big .val,.big2 .val,.amt{color:var(--neu-text)!important}
+.val.exp,.amt.exp,.tm-v.exp{color:var(--neu-exp)!important}
+.val.inc,.amt.inc,.tm-v.inc{color:var(--neu-inc)!important}
+.mut,.small,.sub,.status{color:var(--neu-muted)!important}
+.cmp-chip{background:var(--neu-bg);border:0;box-shadow:4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light)}
+.cmp-chip.up{color:var(--neu-inc)}
+.cmp-chip.down{color:var(--neu-exp)}
+
+/* svg charts */
+.panel svg text,.card svg text{fill:var(--neu-text)!important}
+.panel svg line,.card svg line{stroke:rgba(120,135,160,.2)!important}
+.panel svg polyline,.card svg polyline{stroke:rgba(91,122,234,.85)!important}
+
+/* focus ring tetap */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--neu-accent);outline-offset:2px}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .card,.panel,.row,.btn,.cbtn,.seg button,.tabs button,.theme-switch button{transition:none!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: netralkan tema dark (sama dengan light) ═══ */
+[data-theme="dark"]{
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg);
+  --line:rgba(120,135,160,.18);--pline:rgba(91,122,234,.35);
+  --tx:var(--neu-text);--mut:var(--neu-muted);--p:var(--neu-accent);--p2:#7B93EE;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --pink:#DB6A9E;--mint:#4FA997;
+  --shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light);
+}
+[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
+[data-theme="dark"] .val,[data-theme="dark"] .amt,[data-theme="dark"] .tbl td,
+[data-theme="dark"] .tbl th,[data-theme="dark"] .row,[data-theme="dark"] .bnav button,
+[data-theme="dark"] .nv,[data-theme="dark"] .insight,[data-theme="dark"] .status,
+[data-theme="dark"] .mut,[data-theme="dark"] .small,[data-theme="dark"] .sub{
+  color:var(--neu-muted)!important;
+}
+[data-theme="dark"] .val.exp,[data-theme="dark"] .amt.exp,[data-theme="dark"] .tm-v.exp{color:var(--neu-exp)!important}
+[data-theme="dark"] .val.inc,[data-theme="dark"] .amt.inc,[data-theme="dark"] .tm-v.inc{color:var(--neu-inc)!important}
+[data-theme="dark"] .chip.k,[data-theme="dark"] .qa-chip{background:var(--neu-bg)!important;border:0!important}
+[data-theme="dark"] .seg button.on,[data-theme="dark"] .tabs button.on,
+[data-theme="dark"] .btn.primary,[data-theme="dark"] .btn.primary:hover,
+[data-theme="dark"] .big2,[data-theme="dark"] .big2:hover{
+  color:#fff!important;
+}
+
+
+
+/* ═══ NEUMORPHISM: matikan spotlight bayangan yg menutupi konten ═══ */
+.card::after,.panel::after,.big::after,.greet-card::after{
+  background:transparent!important;
+  opacity:0!important;
+}
+@media (hover:hover) and (pointer:fine){
+  .card:hover::after,.panel:hover::after,.big:hover::after,.greet-card:hover::after{opacity:0!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: pastikan teks login terlihat (ink/border) ═══ */
+:root{--ink:var(--neu-text);--border:rgba(122,138,160,.45)}
+[data-theme="dark"]{--ink:var(--neu-text);--border:rgba(122,138,160,.45)}
+[data-theme="dark"] .card h1{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: toast (standalone) ═══ */
+.toast{
+  background:var(--neu-bg-hover)!important;
+  border:none!important;
+  border-radius:var(--neu-red)!important;
+  color:var(--neu-text)!important;
+  box-shadow:12px 12px 28px var(--neu-dark), -12px -12px 28px var(--neu-light),
+             inset 0 0 0 1px rgba(255,255,255,.6)!important;
+  z-index:9999;
+}
+
+
+
+/* ═══ NEUMORPHISM: tema DARK ═══ */
+[data-theme="dark"]{
+  --neu-bg:#1E222B;
+  --neu-bg-hover:#252A37;
+  --neu-dark:rgba(0,0,0,.45);
+  --neu-dark-soft:rgba(0,0,0,.34);
+  --neu-light:rgba(255,255,255,.08);
+  --neu-text:#E6E9F0;
+  --neu-muted:#9AA3B2;
+  --neu-accent:#7C93E8;
+  --neu-inc:#5FBF8F;
+  --neu-exp:#E88989;
+  --neu-warn:#DFAE5A;
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg-hover);
+  --line:rgba(255,255,255,.10);--pline:rgba(124,147,232,.4);
+  --tx:var(--neu-text);--mut:var(--neu-muted);
+  --p:var(--neu-accent);--p2:#93A6EC;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --ink:var(--neu-text);--border:rgba(255,255,255,.14);
+  --shadow:8px 8px 20px var(--neu-dark), -8px -8px 20px var(--neu-light);
+}
+[data-theme="dark"] .btn.primary,[data-theme="dark"] .big2,
+[data-theme="dark"] .seg button.on,[data-theme="dark"] .tabs button.on{color:#fff!important}
+[data-theme="dark"] .greet-card h1,[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
+[data-theme="dark"] .nv,[data-theme="dark"] .bnav button,[data-theme="dark"] .insight,
+[data-theme="dark"] .status,[data-theme="dark"] .sub,[data-theme="dark"] td,
+[data-theme="dark"] .row,[data-theme="dark"] .tbl td,[data-theme="dark"] .tbl th{
+  color:var(--neu-text)!important;
+}
+[data-theme="dark"] .mut,[data-theme="dark"] .small{color:var(--neu-muted)!important}
+[data-theme="dark"] .val.exp,[data-theme="dark"] .amt.exp,[data-theme="dark"] .tm-v.exp{color:var(--neu-exp)!important}
+[data-theme="dark"] .val.inc,[data-theme="dark"] .amt.inc,[data-theme="dark"] .tm-v.inc{color:var(--neu-inc)!important}
+[data-theme="dark"] .chip.k{color:var(--neu-accent)!important}
+
+
+
+/* ═══ NEUMORPHISM: rapi & simetris baris Set budget ═══ */
+.hdr .actions{gap:8px;flex-wrap:wrap}
+.hdr .actions .inp{height:40px;box-sizing:border-box}
+.hdr .actions .btn.primary{height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 18px;white-space:nowrap}
+@media (max-width:520px){
+  .hdr .actions{width:100%}
+  .hdr .actions .inp{flex:1;min-width:0;width:auto!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: judul sapaan kuat di kedua tema ═══ */
+.greet-card h1{color:var(--neu-text)!important}
+[data-theme="dark"] .greet-card h1{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: brand ikut warna teks tema ═══ */
+.brand,.brand span{color:var(--neu-text)!important}
+[data-theme="dark"] .brand,[data-theme="dark"] .brand span{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: brand span netral (tanpa background gelap/terang) ═══ */
+.brand span{background:transparent!important;border:0!important;box-shadow:none!important;padding:2px 10px}
+
+
+
+/* ═══ NEUMORPHISM: theme toggle = rolling switch (knob asli) ═══ */
+.theme-toggle,.theme-toggle.side,.theme-toggle.greet-toggle{
+  width:60px!important;height:32px!important;border-radius:999px!important;padding:0!important;
+  background:var(--neu-bg)!important;
+  box-shadow:inset 4px 4px 9px var(--neu-dark-soft), inset -4px -4px 9px var(--neu-light)!important;
+  border:0!important;cursor:pointer;position:relative;flex:none;display:inline-flex;overflow:visible;
+}
+.theme-toggle svg{display:none!important}
+.theme-toggle .tt-knob{
+  position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(145deg,#FFFFFF,#D7DCE6);
+  box-shadow:3px 3px 7px var(--neu-dark-soft), -3px -3px 7px var(--neu-light);
+  margin-left:0!important;
+  transition:margin-left .22s ease;
+  pointer-events:none;
+}
+[data-theme="dark"] .theme-toggle .tt-knob{margin-left:28px!important;background:linear-gradient(145deg,#9FB0D4,#5B6E96)!important}
+[data-theme="dark"] .theme-toggle{box-shadow:inset 4px 4px 9px rgba(0,0,0,.5), inset -4px -4px 9px rgba(255,255,255,.10)!important}
+
+
+
+/* ═══ NEUMORPHISM: posisi & tampilan toggle ═══ */
+.theme-toggle.greet-toggle{
+  position:absolute;top:10px;right:10px;
+}
+@media (max-width:860px){
+  .theme-toggle.side{display:none!important}
+  .theme-toggle.greet-toggle{display:inline-block!important}
+}
+@media (min-width:861px){
+  .theme-toggle.greet-toggle{display:none!important}
+  .theme-toggle.side{display:inline-block!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: theme switch (sun/moon, putih-hitam) ═══ */
+.theme-toggle,.theme-toggle.side,.theme-toggle.greet-toggle{
+  display:inline-block!important; position:relative!important;
+  width:64px!important; height:34px!important; padding:0!important; margin:0!important;
+  background:transparent!important; border:0!important; border-radius:0!important;
+  box-shadow:none!important; cursor:pointer; flex:none; user-select:none; -webkit-user-select:none;
+}
+.theme-toggle svg{display:block}
+.theme-toggle .switch__input{
+  -webkit-appearance:none; appearance:none; display:block; margin:0;
+  width:64px; height:34px; border-radius:999px; background:#fff;
+  border:1px solid rgba(120,135,160,.18);
+  box-shadow:none;
+  outline:none; transition:background .3s, box-shadow .3s;
+}
+.theme-toggle .switch__input:checked{background:#262B36;box-shadow:none;border-color:rgba(255,255,255,.10)}
+.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .3s, color .3s}
+.theme-toggle .switch__icon:nth-of-type(2){left:auto;right:8px}
+.theme-toggle .switch__inner{position:absolute;top:7px;left:7px;width:50px;height:20px;overflow:hidden;border-radius:999px;pointer-events:none}
+.theme-toggle .switch__inner::before{content:"";display:block;width:100%;height:100%;background:linear-gradient(145deg,#6B768A,#4A5466);transform:translateX(-50px);transition:transform .3s}
+.theme-toggle .switch__input:checked ~ .switch__inner::before{transform:translateX(0)}
+.theme-toggle .switch__inner-icons{position:absolute;top:7px;left:7px;width:50px;height:20px;pointer-events:none}
+.theme-toggle .switch__inner-icons .switch__icon{position:absolute;top:2px;left:2px;width:16px;height:16px;color:#fff;transition:transform .3s}
+.theme-toggle .switch__inner-icons .switch__icon:nth-child(2){left:auto;right:2px}
+.theme-toggle .switch__input:checked ~ .switch__inner-icons .switch__icon:first-child{transform:translateX(-40px) rotate(-360deg)}
+.theme-toggle .switch__input:checked ~ .switch__inner-icons .switch__icon:nth-child(2){transform:translateX(-40px) rotate(360deg)}
+.theme-toggle .switch__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+
+
+/* ═══ NEUMORPHISM: paksa satu toggle per lebar (terakhir) ═══ */
+.theme-toggle.greet-toggle{position:absolute;bottom:10px;right:10px}
+@media (max-width:860px){
+  .theme-toggle.side{display:none!important}
+  .theme-toggle.greet-toggle{display:inline-block!important}
+}
+@media (min-width:861px){
+  .theme-toggle.greet-toggle{display:none!important}
+  .theme-toggle.side{display:inline-block!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: paksa ikon matahari/bulan tampil ═══ */
+.theme-toggle .switch__icon{
+  width:20px!important;height:20px!important;
+  display:block!important;visibility:visible!important;opacity:1!important;
+  z-index:3;pointer-events:none;
+}
+.theme-toggle .switch__inner-icons .switch__icon{
+  width:16px!important;height:16px!important;
+}
+.theme-toggle .switch__inner,.theme-toggle .switch__inner-icons{z-index:2}
+.theme-toggle .switch__input{z-index:1}
+
+
+
+[data-theme="dark"] .theme-toggle .switch__icon{color:rgba(255,255,255,.8)}
+
+
+
+/* ═══ NEUMORPHISM: swap ikon tunggal (tanpa duplikat) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon:first-of-type{opacity:1;transform:rotate(0deg)}
+.theme-toggle .switch__icon:nth-of-type(2){opacity:0;transform:rotate(180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0;transform:rotate(-180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:nth-of-type(2){opacity:1;transform:rotate(0deg)}
+
 
 
+/* ═══ NEUMORPHISM: swap ikon tunggal (final, !important) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
+.theme-toggle .switch__icon:nth-of-type(2){opacity:0!important;transform:rotate(180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0!important;transform:rotate(-180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: swap ikon berdasarkan tema (final2) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s;opacity:0!important}
+[data-theme="light"] .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
+[data-theme="dark"] .theme-toggle .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: tancapkan toggle di pojok kanan-bawah card ═══ */
+.theme-toggle.greet-toggle{
+  position:absolute!important;top:12px!important;left:auto!important;bottom:auto!important;right:12px!important;
+}
 
 
 
+/* ═══ NEUMORPHISM: toggle menyatu kompak (tanpa menimpa / mencar) ═══ */
+.greet-card{display:flex!important;align-items:center;flex-wrap:wrap;gap:10px}
+.greet-card > div{flex:0 0 auto;min-width:0}
+.theme-toggle.greet-toggle{
+  position:static!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+  margin:0;
+}
 
 
 
+/* ═══ NEUMORPHISM: track ikut tema + dark blend ═══ */
+.theme-toggle .switch__input{background:var(--neu-bg)!important;box-shadow:none!important;border-color:rgba(120,135,160,.18)}
+.theme-toggle .switch__input:checked{background:#262B36!important;border-color:rgba(255,255,255,.10)}
 
 
 
+[data-theme="dark"] .theme-toggle .switch__input{background:#262B36!important;border-color:rgba(255,255,255,.10)}
 
 
 
+/* ═══ NEUMORPHISM: sembunyikan kotak slide -> pill bersih ═══ */
+.theme-toggle .switch__inner{display:none!important}
 
 
 
+/* ═══ NEUMORPHISM: toggle kanan-atas + ruang cadangan (stabil) ═══ */
+.greet-card{display:block!important;padding-right:96px!important}
+.greet-card > div{width:100%}
+.theme-toggle.greet-toggle{
+  position:absolute!important;top:12px!important;right:12px!important;bottom:auto!important;left:auto!important;margin:0;
+}
 
 
+</style>
 
+<script>
+(function(){
+  function go(){
+    var inputs=document.querySelectorAll('.theme-toggle .switch__input');
+    var suns=document.querySelectorAll('.theme-toggle .switch__icon:first-of-type');
+    var moons=document.querySelectorAll('.theme-toggle .switch__icon:nth-of-type(2)');
+    function apply(){
+      var d=document.documentElement.getAttribute('data-theme')==='dark';
+      inputs.forEach(function(i){i.checked=d});
+      suns.forEach(function(s){s.style.opacity=d?'0':'1'});
+      moons.forEach(function(m){m.style.opacity=d?'1':'0'});
+    }
+    inputs.forEach(function(inp){
+      inp.addEventListener('change',function(){
+        var c=document.documentElement.getAttribute('data-theme');
+        var n=(c==='dark')?'light':'dark';
+        document.documentElement.setAttribute('data-theme',n);
+        try{localStorage.setItem('apptheme',n)}catch(e){}
+        apply();
+      });
+    });
+    apply();
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',go)}else{go()}
+})();
+</script>
+<script>
 
 
 
@@ -11892,7 +12322,6 @@ function loginPage(code, botUsername) {
 
 
 
-(function(){try{var t=localStorage.getItem("apptheme")||"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
 
 
 
@@ -11920,6 +12349,7 @@ function loginPage(code, botUsername) {
 
 
 
+(function(){try{var t=localStorage.getItem("apptheme")||"light";document.documentElement.setAttribute("data-theme",t);document.querySelectorAll('.theme-toggle .tt-knob').forEach(function(k){k.style.marginLeft=(t==='dark'?'28px':'0')});}catch(e){}})();
 
 
 
@@ -11960,7 +12390,34 @@ function loginPage(code, botUsername) {
 
 
 
-function toggleTheme(){var c=document.documentElement.getAttribute("data-theme");var n=(c==="dark")?"light":"dark";document.documentElement.setAttribute("data-theme",n);try{localStorage.setItem("apptheme",n)}catch(e){}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function toggleTheme(){var c=document.documentElement.getAttribute("data-theme");var n=(c==="dark")?"light":"dark";document.documentElement.setAttribute("data-theme",n);document.querySelectorAll('.theme-toggle .tt-knob').forEach(function(k){k.style.marginLeft=(n==='dark'?'28px':'0')});try{localStorage.setItem("apptheme",n)}catch(e){}}
 
 
 
@@ -12169,7 +12626,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-<button class="theme-toggle" onclick="toggleTheme()" title="Ganti tema">🌓</button>
+<label class="theme-toggle " aria-label="Ganti tema"><input class="switch__input" type="checkbox" role="switch" name="dark"/><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg><span class="switch__inner"></span><span class="switch__inner-icons"><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg></span><span class="switch__sr">Dark Mode</span></label>
 
 
 
@@ -60190,35 +60647,456 @@ const YEAR_PAGE = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
-</style><script>
 
+/* ═══ NEUMORPHISM PUTIH: design system ═══ */
+:root{
+  --neu-bg:#E3E7EE;
+  --neu-bg-hover:#ECF0F5;
+  --neu-dark:rgba(163,177,198,.55);
+  --neu-dark-soft:rgba(163,177,198,.42);
+  --neu-dark-soft:rgba(163,177,198,.40);
+  --neu-light:rgba(255,255,255,.9);
+  --neu-red:18px;
+  --neu-red-sm:13px;
+  --neu-red-pill:999px;
+  --neu-text:#3A4256;
+  --neu-muted:#7B8794;
+  --neu-accent:#5B7AEA;
+  --neu-inc:#3FA873;
+  --neu-exp:#E06A6A;
+  --neu-warn:#D99A2B;
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg);
+  --tx:var(--neu-text);--mut:var(--neu-muted);
+  --p:var(--neu-accent);--p2:#7B93EE;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --line:rgba(120,135,160,.18);--pline:rgba(91,122,234,.35);
+  --shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light);
+}
+body{background:var(--neu-bg)!important;color:var(--neu-text)!important}
+h1,h2,h3{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--neu-text)!important}
+
+/* permukaan kaca -> neumorphic raised */
+.card,.panel,.side,.bnav,.modal,.greet-card,.insight,.topcat,.big,.big2,.m.top,.quickadd,.bud,.budmini,.budrow,.nw-bar{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red)!important;
+  color:var(--neu-text)!important;
+  box-shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light)!important;
+}
+.card:hover,.panel:hover,.topcat:hover,.row:hover{
+  background:var(--neu-bg-hover)!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+
+/* tombol ber-raise */
+.btn,.btn.primary,.big2,.seg button,.tabs button,.cbtn,.ra-btn,.mic-btn,.qa-chip,.chip,.nw-chip,.theme-toggle,.nv,.bnav button,.stat-card-btn,.btn-icon-circle,.btn-icon-square,.empty-btn{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red-sm)!important;
+  box-shadow:6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light)!important;
+  color:var(--neu-text)!important;
+  transition:background .2s, box-shadow .2s, transform .12s;
+}
+.btn:hover,.btn.primary:hover,.big2:hover,.cbtn:hover,.ra-btn:hover,.mic-btn:hover,.nv:hover,.bnav button:hover,.theme-toggle:hover{
+  background:var(--neu-bg-hover)!important;
+  box-shadow:6px 6px 14px var(--neu-dark-soft), -6px -6px 14px var(--neu-light)!important;
+  transform:none!important;
+}
+.btn:active,.btn.primary:active,.big2:active,.cbtn:active,.ra-btn:active,.mic-btn:active,.nv:active,.bnav button:active,.theme-toggle:active,.chip:active,.qa-chip:active{
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light)!important;
+}
+/* tombol utama aksen */
+.btn.primary,.big2{
+  background:linear-gradient(145deg,var(--neu-bg),#D7DCE6)!important;
+}
+.qa-chip,.chip{font-weight:700}
+.chip.k{color:var(--neu-accent)!important}
+.chip.i,.chip.inc{color:var(--neu-inc)!important}
+.chip.exp{color:var(--neu-exp)!important}
+
+/* input inset */
+input[type],textarea,.field input,.qa-inp,select.inp{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red-sm)!important;
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light)!important;
+  color:var(--neu-text)!important;
+}
+input[type]:focus,textarea:focus,.field input:focus{
+  outline:none;
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light), 0 0 0 3px rgba(91,122,234,.25)!important;
+}
+
+/* tabel & baris */
+th{background:transparent!important;color:var(--neu-muted)!important;border-bottom:1px solid rgba(120,135,160,.2)!important}
+td,.row{border-bottom:1px solid rgba(120,135,160,.14)!important;color:var(--neu-text)!important}
+
+/* bar progress inset */
+.bud .bar,.catrow .track,.tm-bar .track,.tm-track{
+  background:var(--neu-bg)!important;
+  box-shadow:inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light)!important;
+  border-radius:var(--neu-red-pill)!important;overflow:hidden;
+}
+.bud .bar div,.catrow .track div,.tm-bar .track div,.tm-fill,.nw-fill div{
+  background:linear-gradient(90deg,var(--neu-accent),#7B93EE)!important;
+  border-radius:var(--neu-red-pill);
+}
+.bud .bar.warn div{background:linear-gradient(90deg,var(--neu-warn),var(--neu-exp))!important}
+
+/* segmen & tabs: aktif inset */
+.seg,.tabs{background:var(--neu-bg)!important;border:none!important;border-radius:var(--neu-red)!important;
+  box-shadow:inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light)!important;padding:5px}
+.seg button,.tabs button{background:transparent!important;box-shadow:none!important;color:var(--neu-muted)!important}
+.seg button.on,.tabs button.on{
+  background:var(--neu-bg-hover)!important;
+  color:var(--neu-accent)!important;
+  box-shadow:6px 6px 12px var(--neu-dark), -6px -6px 12px var(--neu-light)!important;
+}
+
+/* modal */
+.modal{background:var(--neu-bg)!important;border:none!important;border-radius:22px!important;
+  box-shadow:20px 20px 45px var(--neu-dark), -20px -20px 45px var(--neu-light)!important}
+
+/* warna angka */
+.val,.big .val,.big2 .val,.amt{color:var(--neu-text)!important}
+.val.exp,.amt.exp,.tm-v.exp{color:var(--neu-exp)!important}
+.val.inc,.amt.inc,.tm-v.inc{color:var(--neu-inc)!important}
+.mut,.small,.sub,.status{color:var(--neu-muted)!important}
+.cmp-chip{background:var(--neu-bg);border:0;box-shadow:4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light)}
+.cmp-chip.up{color:var(--neu-inc)}
+.cmp-chip.down{color:var(--neu-exp)}
+
+/* svg charts */
+.panel svg text,.card svg text{fill:var(--neu-text)!important}
+.panel svg line,.card svg line{stroke:rgba(120,135,160,.2)!important}
+.panel svg polyline,.card svg polyline{stroke:rgba(91,122,234,.85)!important}
+
+/* focus ring tetap */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--neu-accent);outline-offset:2px}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .card,.panel,.row,.btn,.cbtn,.seg button,.tabs button,.theme-switch button{transition:none!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: netralkan tema dark (sama dengan light) ═══ */
+[data-theme="dark"]{
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg);
+  --line:rgba(120,135,160,.18);--pline:rgba(91,122,234,.35);
+  --tx:var(--neu-text);--mut:var(--neu-muted);--p:var(--neu-accent);--p2:#7B93EE;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --pink:#DB6A9E;--mint:#4FA997;
+  --shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light);
+}
+[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
+[data-theme="dark"] .val,[data-theme="dark"] .amt,[data-theme="dark"] .tbl td,
+[data-theme="dark"] .tbl th,[data-theme="dark"] .row,[data-theme="dark"] .bnav button,
+[data-theme="dark"] .nv,[data-theme="dark"] .insight,[data-theme="dark"] .status,
+[data-theme="dark"] .mut,[data-theme="dark"] .small,[data-theme="dark"] .sub{
+  color:var(--neu-muted)!important;
+}
+[data-theme="dark"] .val.exp,[data-theme="dark"] .amt.exp,[data-theme="dark"] .tm-v.exp{color:var(--neu-exp)!important}
+[data-theme="dark"] .val.inc,[data-theme="dark"] .amt.inc,[data-theme="dark"] .tm-v.inc{color:var(--neu-inc)!important}
+[data-theme="dark"] .chip.k,[data-theme="dark"] .qa-chip{background:var(--neu-bg)!important;border:0!important}
+[data-theme="dark"] .seg button.on,[data-theme="dark"] .tabs button.on,
+[data-theme="dark"] .btn.primary,[data-theme="dark"] .btn.primary:hover,
+[data-theme="dark"] .big2,[data-theme="dark"] .big2:hover{
+  color:#fff!important;
+}
+
+
+
+/* ═══ NEUMORPHISM: matikan spotlight bayangan yg menutupi konten ═══ */
+.card::after,.panel::after,.big::after,.greet-card::after{
+  background:transparent!important;
+  opacity:0!important;
+}
+@media (hover:hover) and (pointer:fine){
+  .card:hover::after,.panel:hover::after,.big:hover::after,.greet-card:hover::after{opacity:0!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: pastikan teks login terlihat (ink/border) ═══ */
+:root{--ink:var(--neu-text);--border:rgba(122,138,160,.45)}
+[data-theme="dark"]{--ink:var(--neu-text);--border:rgba(122,138,160,.45)}
+[data-theme="dark"] .card h1{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: toast (standalone) ═══ */
+.toast{
+  background:var(--neu-bg-hover)!important;
+  border:none!important;
+  border-radius:var(--neu-red)!important;
+  color:var(--neu-text)!important;
+  box-shadow:12px 12px 28px var(--neu-dark), -12px -12px 28px var(--neu-light),
+             inset 0 0 0 1px rgba(255,255,255,.6)!important;
+  z-index:9999;
+}
+
+
+
+/* ═══ NEUMORPHISM: tema DARK ═══ */
+[data-theme="dark"]{
+  --neu-bg:#1E222B;
+  --neu-bg-hover:#252A37;
+  --neu-dark:rgba(0,0,0,.45);
+  --neu-dark-soft:rgba(0,0,0,.34);
+  --neu-light:rgba(255,255,255,.08);
+  --neu-text:#E6E9F0;
+  --neu-muted:#9AA3B2;
+  --neu-accent:#7C93E8;
+  --neu-inc:#5FBF8F;
+  --neu-exp:#E88989;
+  --neu-warn:#DFAE5A;
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg-hover);
+  --line:rgba(255,255,255,.10);--pline:rgba(124,147,232,.4);
+  --tx:var(--neu-text);--mut:var(--neu-muted);
+  --p:var(--neu-accent);--p2:#93A6EC;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --ink:var(--neu-text);--border:rgba(255,255,255,.14);
+  --shadow:8px 8px 20px var(--neu-dark), -8px -8px 20px var(--neu-light);
+}
+[data-theme="dark"] .btn.primary,[data-theme="dark"] .big2,
+[data-theme="dark"] .seg button.on,[data-theme="dark"] .tabs button.on{color:#fff!important}
+[data-theme="dark"] .nv,[data-theme="dark"] .bnav button,[data-theme="dark"] .insight,
+[data-theme="dark"] .status,[data-theme="dark"] .sub,[data-theme="dark"] td,
+[data-theme="dark"] .row,[data-theme="dark"] .tbl td,[data-theme="dark"] .tbl th{
+  color:var(--neu-text)!important;
+}
+[data-theme="dark"] .mut,[data-theme="dark"] .small{color:var(--neu-muted)!important}
+[data-theme="dark"] .val.exp,[data-theme="dark"] .amt.exp,[data-theme="dark"] .tm-v.exp{color:var(--neu-exp)!important}
+[data-theme="dark"] .val.inc,[data-theme="dark"] .amt.inc,[data-theme="dark"] .tm-v.inc{color:var(--neu-inc)!important}
+[data-theme="dark"] .chip.k{color:var(--neu-accent)!important}
+
+
+
+/* ═══ NEUMORPHISM: rapi & simetris baris Set budget ═══ */
+.hdr .actions{gap:8px;flex-wrap:wrap}
+.hdr .actions .inp{height:40px;box-sizing:border-box}
+.hdr .actions .btn.primary{height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 18px;white-space:nowrap}
+@media (max-width:520px){
+  .hdr .actions{width:100%}
+  .hdr .actions .inp{flex:1;min-width:0;width:auto!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: judul sapaan kuat di kedua tema ═══ */
+.greet-card h1{color:var(--neu-text)!important}
+[data-theme="dark"] .greet-card h1{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: brand ikut warna teks tema ═══ */
+.brand,.brand span{color:var(--neu-text)!important}
+[data-theme="dark"] .brand,[data-theme="dark"] .brand span{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: brand span netral (tanpa background gelap/terang) ═══ */
+.brand span{background:transparent!important;border:0!important;box-shadow:none!important;padding:2px 10px}
+
+
+
+/* ═══ NEUMORPHISM: theme toggle = rolling switch (knob asli) ═══ */
+.theme-toggle,.theme-toggle.side,.theme-toggle.greet-toggle{
+  width:60px!important;height:32px!important;border-radius:999px!important;padding:0!important;
+  background:var(--neu-bg)!important;
+  box-shadow:inset 4px 4px 9px var(--neu-dark-soft), inset -4px -4px 9px var(--neu-light)!important;
+  border:0!important;cursor:pointer;position:relative;flex:none;display:inline-flex;overflow:visible;
+}
+.theme-toggle svg{display:none!important}
+.theme-toggle .tt-knob{
+  position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(145deg,#FFFFFF,#D7DCE6);
+  box-shadow:3px 3px 7px var(--neu-dark-soft), -3px -3px 7px var(--neu-light);
+  margin-left:0!important;
+  transition:margin-left .22s ease;
+  pointer-events:none;
+}
+[data-theme="dark"] .theme-toggle .tt-knob{margin-left:28px!important;background:linear-gradient(145deg,#9FB0D4,#5B6E96)!important}
+[data-theme="dark"] .theme-toggle{box-shadow:inset 4px 4px 9px rgba(0,0,0,.5), inset -4px -4px 9px rgba(255,255,255,.10)!important}
+
+
+
+/* ═══ NEUMORPHISM: posisi & tampilan toggle ═══ */
+.theme-toggle.greet-toggle{
+  position:absolute;top:10px;right:10px;
+}
+@media (max-width:860px){
+  .theme-toggle.side{display:none!important}
+  .theme-toggle.greet-toggle{display:inline-block!important}
+}
+@media (min-width:861px){
+  .theme-toggle.greet-toggle{display:none!important}
+  .theme-toggle.side{display:inline-block!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: theme switch (sun/moon, putih-hitam) ═══ */
+.theme-toggle,.theme-toggle.side,.theme-toggle.greet-toggle{
+  display:inline-block!important; position:relative!important;
+  width:64px!important; height:34px!important; padding:0!important; margin:0!important;
+  background:transparent!important; border:0!important; border-radius:0!important;
+  box-shadow:none!important; cursor:pointer; flex:none; user-select:none; -webkit-user-select:none;
+}
+.theme-toggle svg{display:block}
+.theme-toggle .switch__input{
+  -webkit-appearance:none; appearance:none; display:block; margin:0;
+  width:64px; height:34px; border-radius:999px; background:#fff;
+  border:1px solid rgba(120,135,160,.18);
+  box-shadow:none;
+  outline:none; transition:background .3s, box-shadow .3s;
+}
+.theme-toggle .switch__input:checked{background:#262B36;box-shadow:none;border-color:rgba(255,255,255,.10)}
+.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .3s, color .3s}
+.theme-toggle .switch__icon:nth-of-type(2){left:auto;right:8px}
+.theme-toggle .switch__inner{position:absolute;top:7px;left:7px;width:50px;height:20px;overflow:hidden;border-radius:999px;pointer-events:none}
+.theme-toggle .switch__inner::before{content:"";display:block;width:100%;height:100%;background:linear-gradient(145deg,#6B768A,#4A5466);transform:translateX(-50px);transition:transform .3s}
+.theme-toggle .switch__input:checked ~ .switch__inner::before{transform:translateX(0)}
+.theme-toggle .switch__inner-icons{position:absolute;top:7px;left:7px;width:50px;height:20px;pointer-events:none}
+.theme-toggle .switch__inner-icons .switch__icon{position:absolute;top:2px;left:2px;width:16px;height:16px;color:#fff;transition:transform .3s}
+.theme-toggle .switch__inner-icons .switch__icon:nth-child(2){left:auto;right:2px}
+.theme-toggle .switch__input:checked ~ .switch__inner-icons .switch__icon:first-child{transform:translateX(-40px) rotate(-360deg)}
+.theme-toggle .switch__input:checked ~ .switch__inner-icons .switch__icon:nth-child(2){transform:translateX(-40px) rotate(360deg)}
+.theme-toggle .switch__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+
+
+/* ═══ NEUMORPHISM: paksa satu toggle per lebar (terakhir) ═══ */
+.theme-toggle.greet-toggle{position:absolute;bottom:10px;right:10px}
+@media (max-width:860px){
+  .theme-toggle.side{display:none!important}
+  .theme-toggle.greet-toggle{display:inline-block!important}
+}
+@media (min-width:861px){
+  .theme-toggle.greet-toggle{display:none!important}
+  .theme-toggle.side{display:inline-block!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: paksa ikon matahari/bulan tampil ═══ */
+.theme-toggle .switch__icon{
+  width:20px!important;height:20px!important;
+  display:block!important;visibility:visible!important;opacity:1!important;
+  z-index:3;pointer-events:none;
+}
+.theme-toggle .switch__inner-icons .switch__icon{
+  width:16px!important;height:16px!important;
+}
+.theme-toggle .switch__inner,.theme-toggle .switch__inner-icons{z-index:2}
+.theme-toggle .switch__input{z-index:1}
+
+
+
+[data-theme="dark"] .theme-toggle .switch__icon{color:rgba(255,255,255,.8)}
+
+
+
+/* ═══ NEUMORPHISM: swap ikon tunggal (tanpa duplikat) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon:first-of-type{opacity:1;transform:rotate(0deg)}
+.theme-toggle .switch__icon:nth-of-type(2){opacity:0;transform:rotate(180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0;transform:rotate(-180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:nth-of-type(2){opacity:1;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: swap ikon tunggal (final, !important) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
+.theme-toggle .switch__icon:nth-of-type(2){opacity:0!important;transform:rotate(180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0!important;transform:rotate(-180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: swap ikon berdasarkan tema (final2) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s;opacity:0!important}
+[data-theme="light"] .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
+[data-theme="dark"] .theme-toggle .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: tancapkan toggle di pojok kanan-bawah card ═══ */
+.theme-toggle.greet-toggle{
+  position:absolute!important;top:12px!important;left:auto!important;bottom:auto!important;right:12px!important;
+}
 
 
 
+/* ═══ NEUMORPHISM: toggle menyatu kompak (tanpa menimpa / mencar) ═══ */
+.greet-card{display:flex!important;align-items:center;flex-wrap:wrap;gap:10px}
+.greet-card > div{flex:0 0 auto;min-width:0}
+.theme-toggle.greet-toggle{
+  position:static!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+  margin:0;
+}
 
 
 
+/* ═══ NEUMORPHISM: track ikut tema + dark blend ═══ */
+.theme-toggle .switch__input{background:var(--neu-bg)!important;box-shadow:none!important;border-color:rgba(120,135,160,.18)}
+.theme-toggle .switch__input:checked{background:#262B36!important;border-color:rgba(255,255,255,.10)}
 
 
 
+[data-theme="dark"] .theme-toggle .switch__input{background:#262B36!important;border-color:rgba(255,255,255,.10)}
 
 
 
+/* ═══ NEUMORPHISM: sembunyikan kotak slide -> pill bersih ═══ */
+.theme-toggle .switch__inner{display:none!important}
 
 
 
+/* ═══ NEUMORPHISM: toggle kanan-atas + ruang cadangan (stabil) ═══ */
+.greet-card{display:block!important;padding-right:96px!important}
+.greet-card > div{width:100%}
+.theme-toggle.greet-toggle{
+  position:absolute!important;top:12px!important;right:12px!important;bottom:auto!important;left:auto!important;margin:0;
+}
 
 
+</style>
 
+<script>
+(function(){
+  function go(){
+    var inputs=document.querySelectorAll('.theme-toggle .switch__input');
+    var suns=document.querySelectorAll('.theme-toggle .switch__icon:first-of-type');
+    var moons=document.querySelectorAll('.theme-toggle .switch__icon:nth-of-type(2)');
+    function apply(){
+      var d=document.documentElement.getAttribute('data-theme')==='dark';
+      inputs.forEach(function(i){i.checked=d});
+      suns.forEach(function(s){s.style.opacity=d?'0':'1'});
+      moons.forEach(function(m){m.style.opacity=d?'1':'0'});
+    }
+    inputs.forEach(function(inp){
+      inp.addEventListener('change',function(){
+        var c=document.documentElement.getAttribute('data-theme');
+        var n=(c==='dark')?'light':'dark';
+        document.documentElement.setAttribute('data-theme',n);
+        try{localStorage.setItem('apptheme',n)}catch(e){}
+        apply();
+      });
+    });
+    apply();
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',go)}else{go()}
+})();
+</script>
+<script>
 
 
 
@@ -60258,7 +61136,6 @@ const YEAR_PAGE = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
-(function(){try{var t=localStorage.getItem("apptheme")||"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
 
 
 
@@ -60287,6 +61164,7 @@ const YEAR_PAGE = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
+(function(){try{var t=localStorage.getItem("apptheme")||"light";document.documentElement.setAttribute("data-theme",t);document.querySelectorAll('.theme-toggle .tt-knob').forEach(function(k){k.style.marginLeft=(t==='dark'?'28px':'0')});}catch(e){}})();
 
 
 
@@ -60326,7 +61204,35 @@ const YEAR_PAGE = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
-function toggleTheme(){var c=document.documentElement.getAttribute("data-theme");var n=(c==="dark")?"light":"dark";document.documentElement.setAttribute("data-theme",n);try{localStorage.setItem("apptheme",n)}catch(e){}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function toggleTheme(){var c=document.documentElement.getAttribute("data-theme");var n=(c==="dark")?"light":"dark";document.documentElement.setAttribute("data-theme",n);document.querySelectorAll('.theme-toggle .tt-knob').forEach(function(k){k.style.marginLeft=(n==='dark'?'28px':'0')});try{localStorage.setItem("apptheme",n)}catch(e){}}
 
 
 
@@ -60892,7 +61798,7 @@ if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoad
 
 
 
-    <button class="theme-toggle" onclick="toggleTheme()" title="Ganti tema">🌓</button>
+    <label class="theme-toggle " aria-label="Ganti tema"><input class="switch__input" type="checkbox" role="switch" name="dark"/><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg><span class="switch__inner"></span><span class="switch__inner-icons"><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg></span><span class="switch__sr">Dark Mode</span></label>
 
 
 
@@ -63816,75 +64722,7 @@ function renderYear(url, chatId, tahun, yd) {
 
 
 
-const COLORS = ['#A020F0', '#7B2FF7', '#F87171', '#22C55E', '#F59E0B', '#38BDF8',
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  '#EC4899', '#8B5CF6', '#FACC15', '#2DD4BF', '#FB923C', '#A78BFA'];
+const COLORS = ['#5B7AEA', '#3FA873', '#E06A6A', '#E8A33D', '#8E79C8', '#3AA6B8', '#DD6A9E', '#6C7BA3', '#B6A23F', '#4FA997', '#DA8C5B', '#7D89B5'];
 
 
 
@@ -71683,7 +72521,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
- .budrow{display:flex;justify-content:space-between;font-size:13px;color:var(--tx);margin:3px 0;font-weight:600}
+ .budrow{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 10px;font-size:13px;color:var(--tx);margin:3px 0;font-weight:600}
+.budrow b{text-align:right;font-weight:700;display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;justify-content:flex-end}
  .nw-cats{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
  .nw-chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--card);border:2px solid var(--tx)}
  .nw-bar{height:24px;background:var(--card);border:2px solid var(--tx);border-radius:999px;overflow:hidden;margin:4px 0 12px}
@@ -73613,35 +74452,456 @@ to{transform:scale(1);opacity:1}}
 
 /* aksesibilitas: focus ring terlihat */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--p);outline-offset:2px}
-</style><script>
 
+/* ═══ NEUMORPHISM PUTIH: design system ═══ */
+:root{
+  --neu-bg:#E3E7EE;
+  --neu-bg-hover:#ECF0F5;
+  --neu-dark:rgba(163,177,198,.55);
+  --neu-dark-soft:rgba(163,177,198,.42);
+  --neu-dark-soft:rgba(163,177,198,.40);
+  --neu-light:rgba(255,255,255,.9);
+  --neu-red:18px;
+  --neu-red-sm:13px;
+  --neu-red-pill:999px;
+  --neu-text:#3A4256;
+  --neu-muted:#7B8794;
+  --neu-accent:#5B7AEA;
+  --neu-inc:#3FA873;
+  --neu-exp:#E06A6A;
+  --neu-warn:#D99A2B;
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg);
+  --tx:var(--neu-text);--mut:var(--neu-muted);
+  --p:var(--neu-accent);--p2:#7B93EE;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --line:rgba(120,135,160,.18);--pline:rgba(91,122,234,.35);
+  --shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light);
+}
+body{background:var(--neu-bg)!important;color:var(--neu-text)!important}
+h1,h2,h3{background:transparent!important;border:0!important;box-shadow:none!important;color:var(--neu-text)!important}
+
+/* permukaan kaca -> neumorphic raised */
+.card,.panel,.side,.bnav,.modal,.greet-card,.insight,.topcat,.big,.big2,.m.top,.quickadd,.bud,.budmini,.budrow,.nw-bar{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red)!important;
+  color:var(--neu-text)!important;
+  box-shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light)!important;
+}
+.card:hover,.panel:hover,.topcat:hover,.row:hover{
+  background:var(--neu-bg-hover)!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+
+/* tombol ber-raise */
+.btn,.btn.primary,.big2,.seg button,.tabs button,.cbtn,.ra-btn,.mic-btn,.qa-chip,.chip,.nw-chip,.theme-toggle,.nv,.bnav button,.stat-card-btn,.btn-icon-circle,.btn-icon-square,.empty-btn{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red-sm)!important;
+  box-shadow:6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light)!important;
+  color:var(--neu-text)!important;
+  transition:background .2s, box-shadow .2s, transform .12s;
+}
+.btn:hover,.btn.primary:hover,.big2:hover,.cbtn:hover,.ra-btn:hover,.mic-btn:hover,.nv:hover,.bnav button:hover,.theme-toggle:hover{
+  background:var(--neu-bg-hover)!important;
+  box-shadow:6px 6px 14px var(--neu-dark-soft), -6px -6px 14px var(--neu-light)!important;
+  transform:none!important;
+}
+.btn:active,.btn.primary:active,.big2:active,.cbtn:active,.ra-btn:active,.mic-btn:active,.nv:active,.bnav button:active,.theme-toggle:active,.chip:active,.qa-chip:active{
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light)!important;
+}
+/* tombol utama aksen */
+.btn.primary,.big2{
+  background:linear-gradient(145deg,var(--neu-bg),#D7DCE6)!important;
+}
+.qa-chip,.chip{font-weight:700}
+.chip.k{color:var(--neu-accent)!important}
+.chip.i,.chip.inc{color:var(--neu-inc)!important}
+.chip.exp{color:var(--neu-exp)!important}
+
+/* input inset */
+input[type],textarea,.field input,.qa-inp,select.inp{
+  background:var(--neu-bg)!important;
+  border:none!important;
+  border-radius:var(--neu-red-sm)!important;
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light)!important;
+  color:var(--neu-text)!important;
+}
+input[type]:focus,textarea:focus,.field input:focus{
+  outline:none;
+  box-shadow:inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light), 0 0 0 3px rgba(91,122,234,.25)!important;
+}
+
+/* tabel & baris */
+th{background:transparent!important;color:var(--neu-muted)!important;border-bottom:1px solid rgba(120,135,160,.2)!important}
+td,.row{border-bottom:1px solid rgba(120,135,160,.14)!important;color:var(--neu-text)!important}
+
+/* bar progress inset */
+.bud .bar,.catrow .track,.tm-bar .track,.tm-track{
+  background:var(--neu-bg)!important;
+  box-shadow:inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light)!important;
+  border-radius:var(--neu-red-pill)!important;overflow:hidden;
+}
+.bud .bar div,.catrow .track div,.tm-bar .track div,.tm-fill,.nw-fill div{
+  background:linear-gradient(90deg,var(--neu-accent),#7B93EE)!important;
+  border-radius:var(--neu-red-pill);
+}
+.bud .bar.warn div{background:linear-gradient(90deg,var(--neu-warn),var(--neu-exp))!important}
+
+/* segmen & tabs: aktif inset */
+.seg,.tabs{background:var(--neu-bg)!important;border:none!important;border-radius:var(--neu-red)!important;
+  box-shadow:inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light)!important;padding:5px}
+.seg button,.tabs button{background:transparent!important;box-shadow:none!important;color:var(--neu-muted)!important}
+.seg button.on,.tabs button.on{
+  background:var(--neu-bg-hover)!important;
+  color:var(--neu-accent)!important;
+  box-shadow:6px 6px 12px var(--neu-dark), -6px -6px 12px var(--neu-light)!important;
+}
+
+/* modal */
+.modal{background:var(--neu-bg)!important;border:none!important;border-radius:22px!important;
+  box-shadow:20px 20px 45px var(--neu-dark), -20px -20px 45px var(--neu-light)!important}
+
+/* warna angka */
+.val,.big .val,.big2 .val,.amt{color:var(--neu-text)!important}
+.val.exp,.amt.exp,.tm-v.exp{color:var(--neu-exp)!important}
+.val.inc,.amt.inc,.tm-v.inc{color:var(--neu-inc)!important}
+.mut,.small,.sub,.status{color:var(--neu-muted)!important}
+.cmp-chip{background:var(--neu-bg);border:0;box-shadow:4px 4px 10px var(--neu-dark), -4px -4px 10px var(--neu-light)}
+.cmp-chip.up{color:var(--neu-inc)}
+.cmp-chip.down{color:var(--neu-exp)}
+
+/* svg charts */
+.panel svg text,.card svg text{fill:var(--neu-text)!important}
+.panel svg line,.card svg line{stroke:rgba(120,135,160,.2)!important}
+.panel svg polyline,.card svg polyline{stroke:rgba(91,122,234,.85)!important}
+
+/* focus ring tetap */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--neu-accent);outline-offset:2px}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .card,.panel,.row,.btn,.cbtn,.seg button,.tabs button,.theme-switch button{transition:none!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: netralkan tema dark (sama dengan light) ═══ */
+[data-theme="dark"]{
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg);
+  --line:rgba(120,135,160,.18);--pline:rgba(91,122,234,.35);
+  --tx:var(--neu-text);--mut:var(--neu-muted);--p:var(--neu-accent);--p2:#7B93EE;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --pink:#DB6A9E;--mint:#4FA997;
+  --shadow:9px 9px 24px var(--neu-dark), -9px -9px 24px var(--neu-light);
+}
+[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
+[data-theme="dark"] .val,[data-theme="dark"] .amt,[data-theme="dark"] .tbl td,
+[data-theme="dark"] .tbl th,[data-theme="dark"] .row,[data-theme="dark"] .bnav button,
+[data-theme="dark"] .nv,[data-theme="dark"] .insight,[data-theme="dark"] .status,
+[data-theme="dark"] .mut,[data-theme="dark"] .small,[data-theme="dark"] .sub{
+  color:var(--neu-muted)!important;
+}
+[data-theme="dark"] .val.exp,[data-theme="dark"] .amt.exp,[data-theme="dark"] .tm-v.exp{color:var(--neu-exp)!important}
+[data-theme="dark"] .val.inc,[data-theme="dark"] .amt.inc,[data-theme="dark"] .tm-v.inc{color:var(--neu-inc)!important}
+[data-theme="dark"] .chip.k,[data-theme="dark"] .qa-chip{background:var(--neu-bg)!important;border:0!important}
+[data-theme="dark"] .seg button.on,[data-theme="dark"] .tabs button.on,
+[data-theme="dark"] .btn.primary,[data-theme="dark"] .btn.primary:hover,
+[data-theme="dark"] .big2,[data-theme="dark"] .big2:hover{
+  color:#fff!important;
+}
+
+
+
+/* ═══ NEUMORPHISM: matikan spotlight bayangan yg menutupi konten ═══ */
+.card::after,.panel::after,.big::after,.greet-card::after{
+  background:transparent!important;
+  opacity:0!important;
+}
+@media (hover:hover) and (pointer:fine){
+  .card:hover::after,.panel:hover::after,.big:hover::after,.greet-card:hover::after{opacity:0!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: pastikan teks login terlihat (ink/border) ═══ */
+:root{--ink:var(--neu-text);--border:rgba(122,138,160,.45)}
+[data-theme="dark"]{--ink:var(--neu-text);--border:rgba(122,138,160,.45)}
+[data-theme="dark"] .card h1{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: toast (standalone) ═══ */
+.toast{
+  background:var(--neu-bg-hover)!important;
+  border:none!important;
+  border-radius:var(--neu-red)!important;
+  color:var(--neu-text)!important;
+  box-shadow:12px 12px 28px var(--neu-dark), -12px -12px 28px var(--neu-light),
+             inset 0 0 0 1px rgba(255,255,255,.6)!important;
+  z-index:9999;
+}
+
+
+
+/* ═══ NEUMORPHISM: tema DARK ═══ */
+[data-theme="dark"]{
+  --neu-bg:#1E222B;
+  --neu-bg-hover:#252A37;
+  --neu-dark:rgba(0,0,0,.45);
+  --neu-dark-soft:rgba(0,0,0,.34);
+  --neu-light:rgba(255,255,255,.08);
+  --neu-text:#E6E9F0;
+  --neu-muted:#9AA3B2;
+  --neu-accent:#7C93E8;
+  --neu-inc:#5FBF8F;
+  --neu-exp:#E88989;
+  --neu-warn:#DFAE5A;
+  --bg:var(--neu-bg);--card:var(--neu-bg);--elev:var(--neu-bg-hover);
+  --line:rgba(255,255,255,.10);--pline:rgba(124,147,232,.4);
+  --tx:var(--neu-text);--mut:var(--neu-muted);
+  --p:var(--neu-accent);--p2:#93A6EC;
+  --inc:var(--neu-inc);--exp:var(--neu-exp);--yellow:var(--neu-warn);
+  --ink:var(--neu-text);--border:rgba(255,255,255,.14);
+  --shadow:8px 8px 20px var(--neu-dark), -8px -8px 20px var(--neu-light);
+}
+[data-theme="dark"] .btn.primary,[data-theme="dark"] .big2,
+[data-theme="dark"] .seg button.on,[data-theme="dark"] .tabs button.on{color:#fff!important}
+[data-theme="dark"] .nv,[data-theme="dark"] .bnav button,[data-theme="dark"] .insight,
+[data-theme="dark"] .status,[data-theme="dark"] .sub,[data-theme="dark"] td,
+[data-theme="dark"] .row,[data-theme="dark"] .tbl td,[data-theme="dark"] .tbl th{
+  color:var(--neu-text)!important;
+}
+[data-theme="dark"] .mut,[data-theme="dark"] .small{color:var(--neu-muted)!important}
+[data-theme="dark"] .val.exp,[data-theme="dark"] .amt.exp,[data-theme="dark"] .tm-v.exp{color:var(--neu-exp)!important}
+[data-theme="dark"] .val.inc,[data-theme="dark"] .amt.inc,[data-theme="dark"] .tm-v.inc{color:var(--neu-inc)!important}
+[data-theme="dark"] .chip.k{color:var(--neu-accent)!important}
+
+
+
+/* ═══ NEUMORPHISM: rapi & simetris baris Set budget ═══ */
+.hdr .actions{gap:8px;flex-wrap:wrap}
+.hdr .actions .inp{height:40px;box-sizing:border-box}
+.hdr .actions .btn.primary{height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 18px;white-space:nowrap}
+@media (max-width:520px){
+  .hdr .actions{width:100%}
+  .hdr .actions .inp{flex:1;min-width:0;width:auto!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: judul sapaan kuat di kedua tema ═══ */
+.greet-card h1{color:var(--neu-text)!important}
+[data-theme="dark"] .greet-card h1{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: brand ikut warna teks tema ═══ */
+.brand,.brand span{color:var(--neu-text)!important}
+[data-theme="dark"] .brand,[data-theme="dark"] .brand span{color:var(--neu-text)!important}
+
+
+
+/* ═══ NEUMORPHISM: brand span netral (tanpa background gelap/terang) ═══ */
+.brand span{background:transparent!important;border:0!important;box-shadow:none!important;padding:2px 10px}
+
+
+
+/* ═══ NEUMORPHISM: theme toggle = rolling switch (knob asli) ═══ */
+.theme-toggle,.theme-toggle.side,.theme-toggle.greet-toggle{
+  width:60px!important;height:32px!important;border-radius:999px!important;padding:0!important;
+  background:var(--neu-bg)!important;
+  box-shadow:inset 4px 4px 9px var(--neu-dark-soft), inset -4px -4px 9px var(--neu-light)!important;
+  border:0!important;cursor:pointer;position:relative;flex:none;display:inline-flex;overflow:visible;
+}
+.theme-toggle svg{display:none!important}
+.theme-toggle .tt-knob{
+  position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(145deg,#FFFFFF,#D7DCE6);
+  box-shadow:3px 3px 7px var(--neu-dark-soft), -3px -3px 7px var(--neu-light);
+  margin-left:0!important;
+  transition:margin-left .22s ease;
+  pointer-events:none;
+}
+[data-theme="dark"] .theme-toggle .tt-knob{margin-left:28px!important;background:linear-gradient(145deg,#9FB0D4,#5B6E96)!important}
+[data-theme="dark"] .theme-toggle{box-shadow:inset 4px 4px 9px rgba(0,0,0,.5), inset -4px -4px 9px rgba(255,255,255,.10)!important}
+
+
+
+/* ═══ NEUMORPHISM: posisi & tampilan toggle ═══ */
+.theme-toggle.greet-toggle{
+  position:absolute;top:10px;right:10px;
+}
+@media (max-width:860px){
+  .theme-toggle.side{display:none!important}
+  .theme-toggle.greet-toggle{display:inline-block!important}
+}
+@media (min-width:861px){
+  .theme-toggle.greet-toggle{display:none!important}
+  .theme-toggle.side{display:inline-block!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: theme switch (sun/moon, putih-hitam) ═══ */
+.theme-toggle,.theme-toggle.side,.theme-toggle.greet-toggle{
+  display:inline-block!important; position:relative!important;
+  width:64px!important; height:34px!important; padding:0!important; margin:0!important;
+  background:transparent!important; border:0!important; border-radius:0!important;
+  box-shadow:none!important; cursor:pointer; flex:none; user-select:none; -webkit-user-select:none;
+}
+.theme-toggle svg{display:block}
+.theme-toggle .switch__input{
+  -webkit-appearance:none; appearance:none; display:block; margin:0;
+  width:64px; height:34px; border-radius:999px; background:#fff;
+  border:1px solid rgba(120,135,160,.18);
+  box-shadow:none;
+  outline:none; transition:background .3s, box-shadow .3s;
+}
+.theme-toggle .switch__input:checked{background:#262B36;box-shadow:none;border-color:rgba(255,255,255,.10)}
+.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .3s, color .3s}
+.theme-toggle .switch__icon:nth-of-type(2){left:auto;right:8px}
+.theme-toggle .switch__inner{position:absolute;top:7px;left:7px;width:50px;height:20px;overflow:hidden;border-radius:999px;pointer-events:none}
+.theme-toggle .switch__inner::before{content:"";display:block;width:100%;height:100%;background:linear-gradient(145deg,#6B768A,#4A5466);transform:translateX(-50px);transition:transform .3s}
+.theme-toggle .switch__input:checked ~ .switch__inner::before{transform:translateX(0)}
+.theme-toggle .switch__inner-icons{position:absolute;top:7px;left:7px;width:50px;height:20px;pointer-events:none}
+.theme-toggle .switch__inner-icons .switch__icon{position:absolute;top:2px;left:2px;width:16px;height:16px;color:#fff;transition:transform .3s}
+.theme-toggle .switch__inner-icons .switch__icon:nth-child(2){left:auto;right:2px}
+.theme-toggle .switch__input:checked ~ .switch__inner-icons .switch__icon:first-child{transform:translateX(-40px) rotate(-360deg)}
+.theme-toggle .switch__input:checked ~ .switch__inner-icons .switch__icon:nth-child(2){transform:translateX(-40px) rotate(360deg)}
+.theme-toggle .switch__sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+
+
+/* ═══ NEUMORPHISM: paksa satu toggle per lebar (terakhir) ═══ */
+.theme-toggle.greet-toggle{position:absolute;bottom:10px;right:10px}
+@media (max-width:860px){
+  .theme-toggle.side{display:none!important}
+  .theme-toggle.greet-toggle{display:inline-block!important}
+}
+@media (min-width:861px){
+  .theme-toggle.greet-toggle{display:none!important}
+  .theme-toggle.side{display:inline-block!important}
+}
+
+
+
+/* ═══ NEUMORPHISM: paksa ikon matahari/bulan tampil ═══ */
+.theme-toggle .switch__icon{
+  width:20px!important;height:20px!important;
+  display:block!important;visibility:visible!important;opacity:1!important;
+  z-index:3;pointer-events:none;
+}
+.theme-toggle .switch__inner-icons .switch__icon{
+  width:16px!important;height:16px!important;
+}
+.theme-toggle .switch__inner,.theme-toggle .switch__inner-icons{z-index:2}
+.theme-toggle .switch__input{z-index:1}
+
+
+
+[data-theme="dark"] .theme-toggle .switch__icon{color:rgba(255,255,255,.8)}
+
+
+
+/* ═══ NEUMORPHISM: swap ikon tunggal (tanpa duplikat) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon:first-of-type{opacity:1;transform:rotate(0deg)}
+.theme-toggle .switch__icon:nth-of-type(2){opacity:0;transform:rotate(180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0;transform:rotate(-180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:nth-of-type(2){opacity:1;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: swap ikon tunggal (final, !important) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
+.theme-toggle .switch__icon:nth-of-type(2){opacity:0!important;transform:rotate(180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0!important;transform:rotate(-180deg)}
+.theme-toggle .switch__input:checked ~ .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: swap ikon berdasarkan tema (final2) ═══ */
+.theme-toggle .switch__inner-icons{display:none!important}
+.theme-toggle .switch__icon{transition:opacity .3s, transform .3s;opacity:0!important}
+[data-theme="light"] .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
+[data-theme="dark"] .theme-toggle .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
 
 
+/* ═══ NEUMORPHISM: tancapkan toggle di pojok kanan-bawah card ═══ */
+.theme-toggle.greet-toggle{
+  position:absolute!important;top:12px!important;left:auto!important;bottom:auto!important;right:12px!important;
+}
 
 
 
+/* ═══ NEUMORPHISM: toggle menyatu kompak (tanpa menimpa / mencar) ═══ */
+.greet-card{display:flex!important;align-items:center;flex-wrap:wrap;gap:10px}
+.greet-card > div{flex:0 0 auto;min-width:0}
+.theme-toggle.greet-toggle{
+  position:static!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+  margin:0;
+}
 
 
 
+/* ═══ NEUMORPHISM: track ikut tema + dark blend ═══ */
+.theme-toggle .switch__input{background:var(--neu-bg)!important;box-shadow:none!important;border-color:rgba(120,135,160,.18)}
+.theme-toggle .switch__input:checked{background:#262B36!important;border-color:rgba(255,255,255,.10)}
 
 
 
+[data-theme="dark"] .theme-toggle .switch__input{background:#262B36!important;border-color:rgba(255,255,255,.10)}
 
 
 
+/* ═══ NEUMORPHISM: sembunyikan kotak slide -> pill bersih ═══ */
+.theme-toggle .switch__inner{display:none!important}
 
 
 
+/* ═══ NEUMORPHISM: toggle kanan-atas + ruang cadangan (stabil) ═══ */
+.greet-card{display:block!important;padding-right:96px!important}
+.greet-card > div{width:100%}
+.theme-toggle.greet-toggle{
+  position:absolute!important;top:12px!important;right:12px!important;bottom:auto!important;left:auto!important;margin:0;
+}
 
 
+</style>
 
+<script>
+(function(){
+  function go(){
+    var inputs=document.querySelectorAll('.theme-toggle .switch__input');
+    var suns=document.querySelectorAll('.theme-toggle .switch__icon:first-of-type');
+    var moons=document.querySelectorAll('.theme-toggle .switch__icon:nth-of-type(2)');
+    function apply(){
+      var d=document.documentElement.getAttribute('data-theme')==='dark';
+      inputs.forEach(function(i){i.checked=d});
+      suns.forEach(function(s){s.style.opacity=d?'0':'1'});
+      moons.forEach(function(m){m.style.opacity=d?'1':'0'});
+    }
+    inputs.forEach(function(inp){
+      inp.addEventListener('change',function(){
+        var c=document.documentElement.getAttribute('data-theme');
+        var n=(c==='dark')?'light':'dark';
+        document.documentElement.setAttribute('data-theme',n);
+        try{localStorage.setItem('apptheme',n)}catch(e){}
+        apply();
+      });
+    });
+    apply();
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',go)}else{go()}
+})();
+</script>
+<script>
 
 
 
@@ -73681,7 +74941,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 
 
-(function(){try{var t=localStorage.getItem("apptheme")||"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
 
 
 
@@ -73710,6 +74969,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 
 
+(function(){try{var t=localStorage.getItem("apptheme")||"light";document.documentElement.setAttribute("data-theme",t);document.querySelectorAll('.theme-toggle .tt-knob').forEach(function(k){k.style.marginLeft=(t==='dark'?'28px':'0')});}catch(e){}})();
 
 
 
@@ -73749,7 +75009,35 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 
 
-function toggleTheme(){var c=document.documentElement.getAttribute("data-theme");var n=(c==="dark")?"light":"dark";document.documentElement.setAttribute("data-theme",n);try{localStorage.setItem("apptheme",n)}catch(e){}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function toggleTheme(){var c=document.documentElement.getAttribute("data-theme");var n=(c==="dark")?"light":"dark";document.documentElement.setAttribute("data-theme",n);document.querySelectorAll('.theme-toggle .tt-knob').forEach(function(k){k.style.marginLeft=(n==='dark'?'28px':'0')});try{localStorage.setItem("apptheme",n)}catch(e){}}
 
 
 
@@ -74162,7 +75450,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-    <button class="nv active" data-v="dash">📊 Dashboard</button>
+    <button class="nv active" data-v="dash"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg> Dashboard</button>
 
 
 
@@ -74230,7 +75518,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-    <button class="nv" data-v="tx">🧾 Transaksi</button>
+    <button class="nv" data-v="tx"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h8M8 10h8M8 14h5"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg> Transaksi</button>
 
 
 
@@ -74298,7 +75586,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-    <a class="nv" href="?view=tahun">📅 Rekap Tahunan</a>
+    <a class="nv" href="?view=tahun"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M8 2v4M16 2v4M3 9h18"/></svg> Rekap Tahunan</a>
 
 
 
@@ -74366,7 +75654,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-    <button class="theme-toggle side" onclick="toggleTheme()" title="Ganti tema">🌓</button>
+    <label class="theme-toggle side" aria-label="Ganti tema"><input class="switch__input" type="checkbox" role="switch" name="dark"/><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg><span class="switch__inner"></span><span class="switch__inner-icons"><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg></span><span class="switch__sr">Dark Mode</span></label>
 
 
 
@@ -74502,7 +75790,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-    <button class="nv lo" onclick="location.href='/logout'">🚪 Keluar</button>
+    <button class="nv lo" onclick="location.href='/logout'"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Keluar</button>
 
 
 
@@ -74910,7 +76198,21 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-        <div class="greet-card"><svg class="catm" viewBox="0 0 120 110" aria-hidden="true" role="img">  <ellipse cx="60" cy="86" rx="34" ry="20" fill="#FFC97A"/>  <path d="M34 62 L22 34 L48 50 Z" fill="#FFB84D"/>  <path d="M86 62 L98 34 L72 50 Z" fill="#FFB84D"/>  <path d="M37 58 L31 42 L46 51 Z" fill="#FF9E9E"/>  <path d="M83 58 L89 42 L74 51 Z" fill="#FF9E9E"/>  <circle cx="60" cy="64" r="30" fill="#FFC97A"/>  <ellipse cx="49" cy="63" rx="5.5" ry="6.8" fill="#2E2220"/>  <ellipse cx="71" cy="63" rx="5.5" ry="6.8" fill="#2E2220"/>  <circle cx="51" cy="60.5" r="2" fill="#fff"/>  <circle cx="73" cy="60.5" r="2" fill="#fff"/>  <circle cx="48" cy="60" r="1" fill="#8f6a3b"/>  <circle cx="70" cy="60" r="1" fill="#8f6a3b"/>  <ellipse cx="42" cy="70" rx="5" ry="3" fill="#FF9E9E" opacity=".7"/>  <ellipse cx="78" cy="70" rx="5" ry="3" fill="#FF9E9E" opacity=".7"/>  <path d="M60 70 L60 75 M54 72 L50 74 M66 72 L70 74" stroke="#7A5B3E" stroke-width="1.4" fill="none" stroke-linecap="round"/>  <path d="M28 62 L38 64 M92 62 L82 64" stroke="#B08A5A" stroke-width="1.3" fill="none" stroke-linecap="round"/>  <ellipse cx="60" cy="90" rx="12" ry="6" fill="#FFC97A"/>  <rect x="44" y="88" width="32" height="17" rx="3.5" fill="#A8E6CF" stroke="#171717" stroke-width="1.6"/>  <text x="60" y="101" font-size="11" text-anchor="middle" fill="#171717" font-weight="800">Rp</text>  <circle cx="32" cy="94" r="4" fill="#FFC97A"/>  <circle cx="88" cy="94" r="4" fill="#FFC97A"/>  <path d="M96 8 q8 6 0 12 q-8-6 0-12" fill="#FFB84D"/>  <path d="M101 14 q6 4 0 8 q-6-4 0-8" fill="#FFD88F"/>  <circle cx="94" cy="8" r="2.4" fill="#2E2220"/></svg><button class="theme-toggle greet-toggle" onclick="toggleTheme()" title="Ganti tema">🌓</button><div><h1>{GREET}</h1><div class="sub">{DATE}</div></div></div>
+        <div class="greet-card"><svg class="catm" viewBox="0 0 120 110" aria-hidden="true" role="img">
+  <ellipse cx="58" cy="68" rx="32" ry="24" fill="#DCE3F0"/>
+  <ellipse cx="58" cy="68" rx="32" ry="24" fill="none" stroke="#5B7AEA" stroke-width="2"/>
+  <rect x="40" y="89" width="7" height="11" rx="3" fill="#C6CFE0"/>
+  <rect x="69" y="89" width="7" height="11" rx="3" fill="#C6CFE0"/>
+  <ellipse cx="86" cy="66" rx="10" ry="8" fill="#E6EBF5" stroke="#5B7AEA" stroke-width="2"/>
+  <circle cx="88" cy="64" r="1.5" fill="#5B7AEA"/>
+  <circle cx="84" cy="64" r="1.5" fill="#5B7AEA"/>
+  <path d="M30 48 L24 30 L42 40 Z" fill="#C6CFE0" stroke="#5B7AEA" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="50" cy="60" r="3" fill="#3A4256"/>
+  <circle cx="52" cy="58.5" r="0.9" fill="#fff"/>
+  <rect x="38" y="44" width="12" height="4.5" rx="2.2" fill="#fff" stroke="#5B7AEA" stroke-width="1.6"/>
+  <circle cx="58" cy="28" r="8.5" fill="#F2E08A" stroke="#C9A93A" stroke-width="1.5"/>
+  <text x="58" y="31" font-size="9" text-anchor="middle" fill="#8a7420" font-weight="800">Rp</text>
+</svg><label class="theme-toggle greet-toggle" aria-label="Ganti tema"><input class="switch__input" type="checkbox" role="switch" name="dark"/><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg><span class="switch__inner"></span><span class="switch__inner-icons"><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="20" transform="rotate(0 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(45 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(90 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(135 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(180 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(225 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(270 12 12)"/><line x1="12" y1="17" x2="12" y2="20" transform="rotate(315 12 12)"/></g><circle fill="currentColor" cx="12" cy="12" r="5"/></svg><svg class="switch__icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.1,14.9c-3-0.5-5.5-3-6-6C8.8,7.1,9.1,5.4,9.9,4c0.4-0.8-0.4-1.7-1.2-1.4C4.6,4,1.8,7.9,2,12.5c0.2,5.1,4.4,9.3,9.5,9.5c4.5,0.2,8.5-2.6,9.9-6.6c0.3-0.8-0.6-1.7-1.4-1.2C18.6,14.9,16.9,15.2,15.1,14.9z"/></svg></span><span class="switch__sr">Dark Mode</span></label><div><h1>{GREET}</h1><div class="sub">{DATE}</div></div></div>
 
 
 
@@ -82744,7 +84046,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-  <button class="on" data-v="dash"><span>📊</span>Dashboard</button>
+  <button class="on" data-v="dash"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg></span>Dashboard</button>
 
 
 
@@ -82812,7 +84114,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-  <button data-v="tx"><span>🧾</span>Transaksi</button>
+  <button data-v="tx"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h8M8 10h8M8 14h5"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg></span>Transaksi</button>
 
 
 
@@ -82880,7 +84182,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-  <button data-v="tahun"><span>📅</span>Tahun</button>
+  <button data-v="tahun"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M8 2v4M16 2v4M3 9h18"/></svg></span>Tahun</button>
 
 
 
@@ -82948,7 +84250,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-  <button onclick="location.href='/logout'"><span>🚪</span>Keluar</button>
+  <button onclick="location.href='/logout'"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>Keluar</button>
 
 
 
@@ -91288,7 +92590,7 @@ function svgDaily(expDays, incDays){
 
 
 
-    bars += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="5" fill="url(#gExp)" stroke="#E5484D" stroke-opacity=".35" stroke-width="1"><title>'+days[i]+' · Rp '+Number(v).toLocaleString('id-ID')+'</title></rect>';
+    bars += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="5" fill="url(#gExp)" stroke="#E06A6A" stroke-opacity=".35" stroke-width="1"><title>'+days[i]+' · Rp '+Number(v).toLocaleString('id-ID')+'</title></rect>';
 
 
 
@@ -91900,7 +93202,7 @@ function svgDaily(expDays, incDays){
 
 
 
-  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img"><defs><linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F87171"/><stop offset="1" stop-color="rgba(248,113,113,.18)"/></linearGradient><linearGradient id="gInc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="rgba(34,197,94,.05)"/></linearGradient></defs>'+gl+incArea+incLine+bars+xl+'</svg>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img"><defs><linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E06A6A"/><stop offset="1" stop-color="rgba(224,106,106,.16)"/></linearGradient><linearGradient id="gInc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FA873"/><stop offset="1" stop-color="rgba(63,168,115,.08)"/></linearGradient></defs>'+gl+incArea+incLine+bars+xl+'</svg>';
 
 
 
@@ -93855,10 +95157,10 @@ function renderDashNeeds(d){
   var np=tot>0?Math.round((d.needsTotal/tot)*100):0; var wp=100-np;
   el.innerHTML = '<div class="bud"><div class="budrow"><span>Kebutuhan</span><b>'+fmtRp(d.needsTotal)+'</b></div>' +
     '<div class="nw-cats">'+nectarNeedsChips(d.needsCats)+'</div>' +
-    '<div class="nw-bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#38BDF8,#22C55E)" class="nw-fill">'+np+'%</div></div>' +
+    '<div class="nw-bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#2FA89A,#3FA873)" class="nw-fill">'+np+'%</div></div>' +
     '<div class="budrow"><span>Keinginan</span><b>'+fmtRp(d.wantsTotal)+'</b></div>' +
     '<div class="nw-cats">'+nectarNeedsChips(d.wantsCats)+'</div>' +
-    '<div class="nw-bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#F59E0B,#F87171)" class="nw-fill">'+wp+'%</div></div>' +
+    '<div class="nw-bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#E8A33D,#E06A6A)" class="nw-fill">'+wp+'%</div></div>' +
     '</div>';
 }
 function renderDashBudget(d){
@@ -93867,8 +95169,7 @@ function renderDashBudget(d){
   var used=d.expenseTotal; var bp=Math.min(100,Math.round((used/d.budgetNom)*100));
   var over=used>d.budgetNom; var warn=!over && used>=d.budgetNom*0.8;
   var remain=d.remainBudget;
-  el.innerHTML = '<div class="budrow"><span>Target</span><b>'+fmtRp(d.budgetNom)+'</b></div>' +
-    '<div class="budrow"><span>Terpakai</span><b>'+fmtRp(used)+'</b></div>' +
+  el.innerHTML = '<div class="budrow"><span>Target '+fmtRp(d.budgetNom)+'</span><span>Terpakai '+fmtRp(used)+'</span></div>' +
     '<div class="bar '+(over||warn?'warn':'')+'"><div style="width:'+bp+'%"></div></div>' +
     '<div class="budrow"><span>'+bp+'% terpakai</span><span class="'+(over?'over':(warn?'warn':''))+'">'+
     (remain>=0?'Sisa '+fmtRp(remain):'Lebih '+fmtRp(-remain))+'</span></div>';
@@ -108192,10 +109493,10 @@ window.runCountUp = runCountUp;
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(reduced) return;
   var pets = [
-    { cls:'pet p1 wiggle', e:'🐱' },
-    { cls:'pet p2', e:'🐶' },
-    { cls:'pet p3 flip wiggle', e:'🐰' },
-    { cls:'pet p4', e:'🐸' }
+    { cls:'pet p1 wiggle', e:'<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="#5B7AEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="16" cy="19" rx="8" ry="7"/><path d="M8 16L5 10l5 3M24 16l3-6-5 3"/><circle cx="13" cy="19" r="1.3" fill="#3A4256" stroke="none"/><circle cx="19" cy="19" r="1.3" fill="#3A4256" stroke="none"/></svg>' },
+    { cls:'pet p2', e:'<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="#5B7AEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="16" cy="20" rx="8.5" ry="7"/><path d="M8 15l-3-7 6 5M24 15l3-7-6 5"/><circle cx="12.5" cy="20" r="1.3" fill="#3A4256" stroke="none"/><circle cx="19.5" cy="20" r="1.3" fill="#3A4256" stroke="none"/></svg>' },
+    { cls:'pet p3 flip wiggle', e:'<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="#5B7AEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="16" cy="22" rx="8" ry="6.5"/><path d="M11 16l-3-9 4 6M21 16l3-9-5 6"/><circle cx="13" cy="21" r="1.2" fill="#3A4256" stroke="none"/><circle cx="19" cy="21" r="1.2" fill="#3A4256" stroke="none"/></svg>' },
+    { cls:'pet p4', e:'<svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="#5B7AEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="16" cy="21" rx="8.5" ry="7"/><circle cx="12" cy="21" r="1.4" fill="#3A4256" stroke="none"/><circle cx="20" cy="21" r="1.4" fill="#3A4256" stroke="none"/><path d="M14 24a2 2 0 0 0 4 0"/></svg>' }
   ];
   for(var i=0;i<pets.length;i++){
     var d = document.createElement('div'); d.className = pets[i].cls;
@@ -108936,7 +110237,7 @@ function svgDailyServer(expDays, incDays){
 
 
 
-    bars += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="5" fill="url(#gExp)" stroke="#E5484D" stroke-opacity=".35" stroke-width="1"><title>'+esc(days[i])+' · Rp '+nf(v)+'</title></rect>';
+    bars += '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="5" fill="url(#gExp)" stroke="#E06A6A" stroke-opacity=".35" stroke-width="1"><title>'+esc(days[i])+' · Rp '+nf(v)+'</title></rect>';
 
 
 
@@ -109548,7 +110849,7 @@ function svgDailyServer(expDays, incDays){
 
 
 
-  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img"><defs><linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F87171"/><stop offset="1" stop-color="rgba(248,113,113,.18)"/></linearGradient><linearGradient id="gInc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="rgba(34,197,94,.05)"/></linearGradient></defs>'+gl+incArea+incLine+bars+xl+'</svg>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img"><defs><linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E06A6A"/><stop offset="1" stop-color="rgba(224,106,106,.16)"/></linearGradient><linearGradient id="gInc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FA873"/><stop offset="1" stop-color="rgba(63,168,115,.08)"/></linearGradient></defs>'+gl+incArea+incLine+bars+xl+'</svg>';
 
 
 
@@ -111793,7 +113094,7 @@ function needsBodyHtml(d){
 
 
 
-    '<div class="nw-bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#38BDF8,#22C55E)" class="nw-fill">'+np+'%</div></div>' +
+    '<div class="nw-bar"><div style="width:'+np+'%;background:linear-gradient(90deg,#2FA89A,#3FA873)" class="nw-fill">'+np+'%</div></div>' +
 
 
 
@@ -111930,7 +113231,7 @@ function needsBodyHtml(d){
 
 
 
-    '<div class="nw-bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#F59E0B,#F87171)" class="nw-fill">'+wp+'%</div></div>' +
+    '<div class="nw-bar"><div style="width:'+wp+'%;background:linear-gradient(90deg,#E8A33D,#E06A6A)" class="nw-fill">'+wp+'%</div></div>' +
 
 
 
@@ -115400,75 +116701,7 @@ function html(url, bulan, chatId, d, uname) {
 
 
 
-      <div class="budrow"><span>Target</span><b>${rp(d.budgetNom)}</b></div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      <div class="budrow"><span>Terpakai</span><b>${rp(d.expenseTotal)}</b></div>
+      <div class="budrow"><span>Target ${rp(d.budgetNom)}</span><span>Terpakai ${rp(d.expenseTotal)}</span></div>
 
 
 
