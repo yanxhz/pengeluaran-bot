@@ -1,4 +1,5 @@
 // Dashboard personal expense tracker — dark fintech, layout sidebar multi-view.
+import { buildXlsx } from './xlsx.js';
 
 
 
@@ -12101,7 +12102,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   background:linear-gradient(145deg,#FFFFFF,#D7DCE6);
   box-shadow:3px 3px 7px var(--neu-dark-soft), -3px -3px 7px var(--neu-light);
   margin-left:0!important;
-  transition:margin-left .22s ease;
+  transition:margin-left .15s ease;
   pointer-events:none;
 }
 [data-theme="dark"] .theme-toggle .tt-knob{margin-left:28px!important;background:linear-gradient(145deg,#9FB0D4,#5B6E96)!important}
@@ -12137,10 +12138,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   width:64px; height:34px; border-radius:999px; background:#fff;
   border:1px solid rgba(120,135,160,.18);
   box-shadow:none;
-  outline:none; transition:background .3s, box-shadow .3s;
+  outline:none; transition:background .18s, box-shadow .18s;
 }
 .theme-toggle .switch__input:checked{background:#262B36;box-shadow:none;border-color:rgba(255,255,255,.10)}
-.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .3s, color .3s}
+.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .18s, color .18s}
 .theme-toggle .switch__icon:nth-of-type(2){left:auto;right:8px}
 .theme-toggle .switch__inner{position:absolute;top:7px;left:7px;width:50px;height:20px;overflow:hidden;border-radius:999px;pointer-events:none}
 .theme-toggle .switch__inner::before{content:"";display:block;width:100%;height:100%;background:linear-gradient(145deg,#6B768A,#4A5466);transform:translateX(-50px);transition:transform .3s}
@@ -12187,7 +12188,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon tunggal (tanpa duplikat) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s}
 .theme-toggle .switch__icon:first-of-type{opacity:1;transform:rotate(0deg)}
 .theme-toggle .switch__icon:nth-of-type(2){opacity:0;transform:rotate(180deg)}
 .theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0;transform:rotate(-180deg)}
@@ -12197,7 +12198,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon tunggal (final, !important) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s}
 .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
 .theme-toggle .switch__icon:nth-of-type(2){opacity:0!important;transform:rotate(180deg)}
 .theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0!important;transform:rotate(-180deg)}
@@ -12207,7 +12208,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon berdasarkan tema (final2) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s;opacity:0!important}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s;opacity:0!important}
 [data-theme="light"] .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
 [data-theme="dark"] .theme-toggle .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
@@ -27090,6 +27091,7 @@ export async function handleWebDemo(request, env) {
 
 
   await seedDemoData(env, uid);
+  await seedFullYearDemo(env, uid);
 
 
 
@@ -27496,6 +27498,32 @@ export async function handleWebDemo(request, env) {
 
 
 
+
+async function seedFullYearDemo(env, chatId) {
+  const year = new Date().getFullYear();
+  const pad = (n) => String(n).padStart(2, '0');
+  const ins = (tanggal, kategori, nominal, catatan, tipe) =>
+    env.DB.prepare('INSERT INTO pengeluaran (chat_id, tanggal, kategori, nominal, catatan, tipe) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(chatId, tanggal, kategori, nominal, catatan, tipe).run();
+  const monthlyExp = [
+    [3, 'makan', 45000, 'belanja mingguan'],
+    [7, 'transport', 20000, 'bensin'],
+    [10, 'tagihan', 350000, 'listrik'],
+    [14, 'makan', 25000, 'nasi padang'],
+    [17, 'kesehatan', 50000, 'vitamin'],
+    [21, 'belanja', 150000, 'sembako'],
+    [24, 'hiburan', 100000, 'nonton'],
+    [27, 'lainnya', 30000, 'pulsa'],
+  ];
+  for (let m = 0; m < 12; m++) {
+    const mm = pad(m + 1);
+    await ins(`${year}-${mm}-01`, 'gaji', 4500000, 'gaji bulanan', 'masuk');
+    if (m === 2 || m === 6 || m === 11) await ins(`${year}-${mm}-15`, 'bonus', 750000, 'bonus', 'masuk');
+    for (const [d, k, v, c] of monthlyExp) {
+      await ins(`${year}-${mm}-${pad(d)}`, k, v, c, 'keluar');
+    }
+  }
+}
 
 async function seedDemoData(env, chatId) {
 
@@ -44505,6 +44533,221 @@ export async function handleExportCsv(request, env) {
 
 
 
+export async function handleExportXlsx(request, env) {
+  const uid = await authUid(request, env);
+  if (!uid) return jsonErr(401, 'Belum masuk.');
+  const rows = (await env.DB.prepare('SELECT * FROM pengeluaran WHERE chat_id = ? ORDER BY tanggal, id').bind(uid).all()).results || [];
+  let prefs = {};
+  try { const p = await env.DB.prepare('SELECT kategori, tipe FROM kat_pref WHERE chat_id = ?').bind(uid).all(); (p.results || []).forEach(x => prefs[x.kategori] = x.tipe); } catch (e) {}
+
+  let incTotal = 0, expTotal = 0;
+  const catMap = {}, monMap = {};
+  for (const r of rows) {
+    const nom = Number(r.nominal) || 0;
+    if (r.tipe === 'masuk') incTotal += nom; else expTotal += nom;
+    const bln = String(r.tanggal).slice(0, 7);
+    if (!monMap[bln]) monMap[bln] = { inc: 0, exp: 0, n: 0 };
+    const m = monMap[bln]; m.n++;
+    if (r.tipe === 'masuk') m.inc += nom; else m.exp += nom;
+    if (r.tipe === 'keluar') {
+      if (!catMap[r.kategori]) catMap[r.kategori] = { n: 0, total: 0 };
+      catMap[r.kategori].total += nom; catMap[r.kategori].n++;
+    }
+  }
+  const saldo = incTotal - expTotal;
+  const nTotal = rows.length;
+  const cats = Object.keys(catMap).map(k => ({ kategori: k, n: catMap[k].n, total: catMap[k].total })).sort((a, b) => b.total - a.total);
+  const months = Object.keys(monMap).sort().map(bln => { const m = monMap[bln]; return { bln, inc: m.inc, exp: m.exp, selisih: m.inc - m.exp, n: m.n }; });
+
+  let need = 0, want = 0;
+  cats.forEach(c => { const t = prefs[c.kategori]; if (t === 'kb') need += c.total; else if (t === 'kk') want += c.total; });
+
+  // ---- INDEX STYLE (cocok dengan styles.xml di xlsx.js) ----
+  const S = {
+    HEAD: 1, HERO: 2, KPI_LBL: 3, KPI_VAL: 4,
+    ACC_G: 5, ACC_R: 6, ACC_B: 7, ACC_D: 8,
+    ZEVEN: 9, ZODD: 10, ZBOLD: 11, PCT_EVEN: 12, PCT_ODD: 13,
+    DATE: 14, CUR_EVEN: 15, CUR_ODD: 16, CUR_BOLD: 17, CUR_NEG: 18, TXT_NEG: 19, HEAD_R: 20, PANEL: 21, TOT_CNT: 22,
+  };
+
+  // ---- data turunan untuk tampilan ----
+  let cum = 0;
+  months.forEach((m) => { cum += m.selisih; m.cum = cum; });
+
+  const Ltr = (i) => String.fromCharCode(65 + i);
+  const P = 16;
+  const grid = [];
+  const setc = (r, c, v, st, opts) => { const row = grid[r - 1] || (grid[r - 1] = new Array(P).fill(null)); row[c] = opts ? [v, st, opts] : st === undefined ? v : [v, st]; };
+  const merges = [];
+  const mrg = (r1, c1, r2, c2) => merges.push(Ltr(c1) + r1 + ':' + Ltr(c2) + r2);
+
+  // ---- HEADER ----
+  setc(2, 2, 'DASHBOARD', S.HERO); mrg(2, 2, 2, 13);
+  const now = new Date();
+  const tglExport = now.getDate() + '/' + (now.getMonth() + 1) + '/' + now.getFullYear();
+  const blnKata = (bln) => (['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][+String(bln).slice(5, 7) - 1] || '');
+  const periode = months.length
+    ? blnKata(months[0].bln) + ' - ' + blnKata(months[months.length - 1].bln) + ' ' + months[0].bln.slice(0, 4)
+    : String(new Date().getFullYear());
+  const nowYmd = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const isProyeksi = months.length && months[months.length - 1].bln > nowYmd;
+  const subtitle = 'Periode ' + periode + '  •  Diexport ' + tglExport +
+    (isProyeksi ? '  •  Data mengandung proyeksi (bulan mendatang)' : '');
+  setc(3, 2, subtitle, S.KPI_LBL); mrg(3, 2, 3, 13);
+
+  // ---- KARTU KPI ----
+  setc(4, 2, '', S.ACC_G); mrg(4, 2, 4, 4);
+  setc(4, 5, '', S.ACC_R); mrg(4, 5, 4, 7);
+  setc(4, 8, '', S.ACC_B); mrg(4, 8, 4, 10);
+  setc(4, 11, '', S.ACC_D); mrg(4, 11, 4, 13);
+  setc(5, 2, 'PEMASUKAN', S.KPI_LBL); mrg(5, 2, 5, 4);
+  setc(5, 5, 'PENGELUARAN', S.KPI_LBL); mrg(5, 5, 5, 7);
+  setc(5, 8, 'SALDO', S.KPI_LBL); mrg(5, 8, 5, 10);
+  setc(5, 11, 'TRANSAKSI', S.KPI_LBL); mrg(5, 11, 5, 13);
+  setc(6, 2, incTotal, S.KPI_VAL); mrg(6, 2, 6, 4);
+  setc(6, 5, expTotal, S.KPI_VAL); mrg(6, 5, 6, 7);
+  setc(6, 8, saldo, saldo < 0 ? S.CUR_NEG : S.KPI_VAL); mrg(6, 8, 6, 10);
+  setc(6, 11, nTotal, S.KPI_VAL); mrg(6, 11, 6, 13);
+
+  // ---- AREA GRAFIK DI TENGAH ----
+  const chTop = 8; // baris 0-based anchor
+
+  // ---- TABEL DI BAWAH ----
+  // TREN BULANAN: horizontal (bulan ke kanan), kolom C..N
+  const trnSection = 25;
+  setc(trnSection, 2, 'TREN BULANAN', S.HEAD); mrg(trnSection, 2, trnSection, 14);
+  const trnHead = trnSection + 1;
+  setc(trnHead, 2, 'Bulan', S.HEAD);
+  months.forEach((m, i) => setc(trnHead, 3 + i, blnKata(m.bln), S.HEAD));
+  const firstMonCol = 3;
+  const lastMonCol = 3 + months.length - 1;
+  const trnPem = trnHead + 1;
+  const trnExp = trnPem + 1;
+  const trnSel = trnPem + 2;
+  const trnSal = trnPem + 3;
+  const putRow = (r, label, vals, negKey) => {
+    const zebra = (r % 2 === 0) ? S.ZEVEN : S.ZODD;
+    setc(r, 2, label, zebra);
+    vals.forEach((v, i) => {
+      const c = firstMonCol + i;
+      const st = negKey && v < 0 ? S.CUR_NEG : zebra === S.ZEVEN ? S.CUR_EVEN : S.CUR_ODD;
+      setc(r, c, v, st);
+    });
+  };
+  putRow(trnPem, 'Pemasukan', months.map(m => m.inc));
+  putRow(trnExp, 'Pengeluaran', months.map(m => m.exp));
+  putRow(trnSel, 'Selisih', months.map(m => m.selisih), true);
+  putRow(trnSal, 'Saldo', months.map(m => m.cum));
+
+  // PENGELUARAN PER KATEGORI: di bawah tren
+  const katSection = trnSal + 2;
+  setc(katSection, 2, 'PENGELUARAN PER KATEGORI', S.HEAD); mrg(katSection, 2, katSection, 5);
+  const katHead = katSection + 1;
+  ['Kategori', 'Jumlah', 'Total (Rp)', '%'].forEach((h, i) => setc(katHead, 2 + i, h, S.HEAD));
+  const katStart = katHead + 1;
+  cats.forEach((c, i) => {
+    const r = katStart + i;
+    const zebra = (r % 2 === 0) ? S.ZEVEN : S.ZODD;
+    const cur = (r % 2 === 0) ? S.CUR_EVEN : S.CUR_ODD;
+    const pct = expTotal > 0 ? c.total / expTotal : 0;
+    setc(r, 2, c.kategori, zebra);
+    setc(r, 3, c.n, zebra);
+    setc(r, 4, c.total, cur);
+    setc(r, 5, pct, (r % 2 === 0) ? S.PCT_EVEN : S.PCT_ODD);
+  });
+  const katEnd = katStart + cats.length - 1;
+  const totRow = katEnd + 1;
+  const sumN = cats.reduce((a, c) => a + c.n, 0);
+  setc(totRow, 2, 'TOTAL', S.ZBOLD);
+  setc(totRow, 3, sumN, S.TOT_CNT, { f: `SUM(D${katStart}:D${katEnd})` });
+  setc(totRow, 4, expTotal, S.CUR_BOLD, { f: `SUM(E${katStart}:E${katEnd})` });
+  setc(totRow, 5, 1, S.PCT_EVEN);
+
+  // ---- latar panel (isi sel kosong, C..O) ----
+  for (let r = 2; r <= totRow; r++) {
+    for (let c = 2; c <= 15; c++) {
+      const row = grid[r - 1];
+      if (!row || row[c] === null) setc(r, c, '', S.PANEL);
+    }
+  }
+
+  // ---- Sheet Per Kategori ----
+  const catRows = [['Kategori', 'Tipe', 'Jumlah', 'Total (Rp)', '% Pengeluaran'].map(h => [h, S.HEAD])];
+  cats.forEach((c, i) => {
+    const ev = i % 2 === 0;
+    const zebra = ev ? S.ZEVEN : S.ZODD;
+    const cur = ev ? S.CUR_EVEN : S.CUR_ODD;
+    const pct = expTotal > 0 ? c.total / expTotal : 0;
+    const tipe = prefs[c.kategori] === 'kb' ? 'Kebutuhan' : prefs[c.kategori] === 'kk' ? 'Keinginan' : '-';
+    catRows.push([c.kategori, tipe, c.n, cur, pct].map((v, j) => (j === 3 ? [v, cur] : (j === 4 ? [v, ev ? S.PCT_EVEN : S.PCT_ODD] : [v, zebra]))));
+  });
+
+  // ---- Sheet Transaksi ----
+  const txRows = [['No', 'Tanggal', 'Jenis', 'Kategori', 'Catatan', 'Nominal'].map(h => [h, S.HEAD])];
+  rows.forEach((r, i) => {
+    const ev = i % 2 === 0;
+    const zebra = ev ? S.ZEVEN : S.ZODD;
+    const cur = ev ? S.CUR_EVEN : S.CUR_ODD;
+    txRows.push([
+      [i + 1, zebra],
+      [r.tanggal, S.DATE, { date: true }],
+      [r.tipe === 'masuk' ? 'Masuk' : 'Keluar', zebra],
+      [r.kategori, zebra],
+      [r.catatan || '', zebra],
+      [Number(r.nominal) || 0, cur],
+    ]);
+  });
+
+  // ---- Chart tertanam di TENGAH (OneCellAnchor, ukuran eksplisit) ----
+  // ukuran: 9,3 cm × 7,5 cm = 3.348.000 × 2.700.000 EMU
+  const charts = [];
+  const MK = (k) => k.slice(2); // ARGB -> RGB
+  const CW = 3348000, CH = 2700000;
+  const monColLetter = Ltr(lastMonCol);
+  if (months.length) {
+    charts.push({ type: 'bar', title: 'Pemasukan vs Pengeluaran', host: 'Dashboard', catSheet: 'Dashboard', catRange: `D${trnHead}:${monColLetter}${trnHead}`, opts: { gap: 70 }, series: [
+      { name: 'Pemasukan', sheet: 'Dashboard', nameCell: 'C' + trnPem, range: `D${trnPem}:${monColLetter}${trnPem}`, color: MK('FF2E8B57') },
+      { name: 'Pengeluaran', sheet: 'Dashboard', nameCell: 'C' + trnExp, range: `D${trnExp}:${monColLetter}${trnExp}`, color: MK('FFC0392B') },
+    ], anchor: { from: { col: 2, row: 7 }, cx: CW, cy: CH } });
+    charts.push({ type: 'line', title: 'Tren Saldo', host: 'Dashboard', catSheet: 'Dashboard', catRange: `D${trnHead}:${monColLetter}${trnHead}`, opts: { lineW: 28575 }, series: [
+      { name: 'Saldo', sheet: 'Dashboard', nameCell: 'C' + trnSal, range: `D${trnSal}:${monColLetter}${trnSal}`, color: MK('FF2E75B6') },
+    ], anchor: { from: { col: 6, row: 7 }, cx: CW, cy: CH } });
+  }
+  if (cats.length) {
+    charts.push({ type: 'doughnut', title: 'Komposisi Kategori', host: 'Dashboard', catSheet: 'Dashboard', catRange: `C${katStart}:C${katEnd}`, opts: { hole: 55, legendPos: 'r' }, series: [
+      { name: 'Total', sheet: 'Dashboard', nameCell: 'E' + katHead, range: `E${katStart}:E${katEnd}` },
+    ], anchor: { from: { col: 10, row: 7 }, cx: CW, cy: CH } });
+  }
+
+  // ---- tinggi baris ----
+  const rh = {};
+  const setRh = (r, h) => { rh[r] = h; };
+  setRh(2, 40); setRh(3, 22);
+  setRh(4, 6); setRh(5, 22); setRh(6, 38);
+  setRh(trnSection, 22); setRh(trnHead, 18);
+  for (let r = trnPem; r <= trnSal; r++) setRh(r, 18);
+  setRh(katSection, 22); setRh(katHead, 18);
+  for (let r = katStart; r <= totRow; r++) setRh(r, 18);
+
+  const dashWidths = { A: 3, B: 2.4, C: 13 };
+  for (let c = 4; c <= 15; c++) dashWidths[Ltr(c - 1)] = 9;
+  const margins = 'left="0.3" right="0.3" top="0.4" bottom="0.4" header="0.2" footer="0.2"';
+  const sheets = [
+    { name: 'Dashboard', rows: grid, rowHeights: rh, merges, widths: dashWidths,
+      opts: { showGrid: false, freeze: { row: 3 }, zoom: 95, fitToWidth: 1, orientation: 'landscape', margins, tabColor: 'FF1F3A5F' } },
+    { name: 'Per Kategori', rows: catRows, widths: { A: 20, B: 14, C: 10, D: 16, E: 16 },
+      opts: { showGrid: false, freeze: { row: 1 }, zoom: 95, tabColor: 'FF2E75B6' } },
+    { name: 'Transaksi', rows: txRows, widths: { A: 6, B: 13, C: 10, D: 14, E: 32, F: 16 },
+      opts: { showGrid: false, freeze: { row: 1 }, zoom: 95, autofilter: `A1:F${txRows.length}`, tabColor: 'FFC0392B' } },
+  ];
+
+  const buf = buildXlsx({ sheets, charts, title: 'Dashboard Pengeluaran', creator: 'Pengeluaran Bot' });
+  return new Response(buf, { headers: {
+    'content-type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'Content-Disposition': 'attachment; filename="pengeluaran.xlsx"',
+  } });
+}
+
 export async function handleBackup(request, env) {
 
 
@@ -60926,7 +61169,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   background:linear-gradient(145deg,#FFFFFF,#D7DCE6);
   box-shadow:3px 3px 7px var(--neu-dark-soft), -3px -3px 7px var(--neu-light);
   margin-left:0!important;
-  transition:margin-left .22s ease;
+  transition:margin-left .15s ease;
   pointer-events:none;
 }
 [data-theme="dark"] .theme-toggle .tt-knob{margin-left:28px!important;background:linear-gradient(145deg,#9FB0D4,#5B6E96)!important}
@@ -60962,10 +61205,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   width:64px; height:34px; border-radius:999px; background:#fff;
   border:1px solid rgba(120,135,160,.18);
   box-shadow:none;
-  outline:none; transition:background .3s, box-shadow .3s;
+  outline:none; transition:background .18s, box-shadow .18s;
 }
 .theme-toggle .switch__input:checked{background:#262B36;box-shadow:none;border-color:rgba(255,255,255,.10)}
-.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .3s, color .3s}
+.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .18s, color .18s}
 .theme-toggle .switch__icon:nth-of-type(2){left:auto;right:8px}
 .theme-toggle .switch__inner{position:absolute;top:7px;left:7px;width:50px;height:20px;overflow:hidden;border-radius:999px;pointer-events:none}
 .theme-toggle .switch__inner::before{content:"";display:block;width:100%;height:100%;background:linear-gradient(145deg,#6B768A,#4A5466);transform:translateX(-50px);transition:transform .3s}
@@ -61012,7 +61255,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon tunggal (tanpa duplikat) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s}
 .theme-toggle .switch__icon:first-of-type{opacity:1;transform:rotate(0deg)}
 .theme-toggle .switch__icon:nth-of-type(2){opacity:0;transform:rotate(180deg)}
 .theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0;transform:rotate(-180deg)}
@@ -61022,7 +61265,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon tunggal (final, !important) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s}
 .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
 .theme-toggle .switch__icon:nth-of-type(2){opacity:0!important;transform:rotate(180deg)}
 .theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0!important;transform:rotate(-180deg)}
@@ -61032,7 +61275,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon berdasarkan tema (final2) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s;opacity:0!important}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s;opacity:0!important}
 [data-theme="light"] .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
 [data-theme="dark"] .theme-toggle .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
@@ -69857,7 +70100,7 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
 
-   .bnav button{background:transparent;border:0;color:var(--tx);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:64px}
+   .bnav button{flex:1;background:transparent;border:0;color:var(--tx);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:56px}
 
 
 
@@ -70130,7 +70373,8 @@ const LAYOUT = `<!doctype html><html lang="id"><head><meta charset="utf-8">
 
 
  
-   .qa-chip,.chip,.quickadd button,.mic-btn,.cbtn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+   .qa-chip,.quickadd button,.mic-btn,.cbtn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+   .chip{display:inline-flex;align-items:center;justify-content:center;min-height:0}
    .mic-btn{min-width:44px}
    .bnav button{min-height:56px}
 }
@@ -74741,7 +74985,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   background:linear-gradient(145deg,#FFFFFF,#D7DCE6);
   box-shadow:3px 3px 7px var(--neu-dark-soft), -3px -3px 7px var(--neu-light);
   margin-left:0!important;
-  transition:margin-left .22s ease;
+  transition:margin-left .15s ease;
   pointer-events:none;
 }
 [data-theme="dark"] .theme-toggle .tt-knob{margin-left:28px!important;background:linear-gradient(145deg,#9FB0D4,#5B6E96)!important}
@@ -74777,10 +75021,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   width:64px; height:34px; border-radius:999px; background:#fff;
   border:1px solid rgba(120,135,160,.18);
   box-shadow:none;
-  outline:none; transition:background .3s, box-shadow .3s;
+  outline:none; transition:background .18s, box-shadow .18s;
 }
 .theme-toggle .switch__input:checked{background:#262B36;box-shadow:none;border-color:rgba(255,255,255,.10)}
-.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .3s, color .3s}
+.theme-toggle .switch__icon{position:absolute;top:7px;left:8px;width:20px;height:20px;color:#4a4a4a;pointer-events:none;transition:transform .18s, color .18s}
 .theme-toggle .switch__icon:nth-of-type(2){left:auto;right:8px}
 .theme-toggle .switch__inner{position:absolute;top:7px;left:7px;width:50px;height:20px;overflow:hidden;border-radius:999px;pointer-events:none}
 .theme-toggle .switch__inner::before{content:"";display:block;width:100%;height:100%;background:linear-gradient(145deg,#6B768A,#4A5466);transform:translateX(-50px);transition:transform .3s}
@@ -74827,7 +75071,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon tunggal (tanpa duplikat) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s}
 .theme-toggle .switch__icon:first-of-type{opacity:1;transform:rotate(0deg)}
 .theme-toggle .switch__icon:nth-of-type(2){opacity:0;transform:rotate(180deg)}
 .theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0;transform:rotate(-180deg)}
@@ -74837,7 +75081,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon tunggal (final, !important) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s}
 .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
 .theme-toggle .switch__icon:nth-of-type(2){opacity:0!important;transform:rotate(180deg)}
 .theme-toggle .switch__input:checked ~ .switch__icon:first-of-type{opacity:0!important;transform:rotate(-180deg)}
@@ -74847,7 +75091,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ═══ NEUMORPHISM: swap ikon berdasarkan tema (final2) ═══ */
 .theme-toggle .switch__inner-icons{display:none!important}
-.theme-toggle .switch__icon{transition:opacity .3s, transform .3s;opacity:0!important}
+.theme-toggle .switch__icon{transition:opacity .18s, transform .18s;opacity:0!important}
 [data-theme="light"] .theme-toggle .switch__icon:first-of-type{opacity:1!important;transform:rotate(0deg)}
 [data-theme="dark"] .theme-toggle .switch__icon:nth-of-type(2){opacity:1!important;transform:rotate(0deg)}
 
@@ -76446,7 +76690,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-          <a class="btn" href="/api/csv?bulan={BULAN}" download>⬇ Export CSV</a>
+          <a class="btn" href="/api/csv" download>⬇ Export Excel</a>
 
 
 
@@ -76650,7 +76894,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-            <a class="btn" href="?bulan={PREV}">←</a>
+            <a class="btn" href="?bulan={PREV}" onclick="try{sessionStorage.setItem('dash_keep','{PREV}')}catch(e){}">←</a>
 
 
 
@@ -76786,7 +77030,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-            <a class="btn" href="?bulan={NEXT}">→</a>
+            <a class="btn" href="?bulan={NEXT}" onclick="try{sessionStorage.setItem('dash_keep','{NEXT}')}catch(e){}">→</a>
 
 
 
@@ -81762,7 +82006,7 @@ function toggleTheme(){var c=document.documentElement.getAttribute("data-theme")
 
 
 
-          <a class="btn" href="/api/csv?bulan={BULAN}" download>⬇ Export CSV</a>
+          <a class="btn" href="/api/csv" download>⬇ Export Excel</a>
 
 
 
@@ -95255,6 +95499,64 @@ window.refreshDash=refreshDash;
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initReveal); else initReveal();
 })();
+/* ═══ CUSTOM DROPDOWN (mengganti select native) ═══ */
+(function(){
+  function injectDdStyle(){ try{
+    if(document.getElementById('ddstyle')) return;
+    var s=document.createElement('style'); s.id='ddstyle';
+    s.textContent=
+      '.dd{position:relative;display:block;width:100%;font-size:13.5px}'+
+      '.dd .dd-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:var(--card);border:2px solid var(--tx);color:var(--tx);border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;box-shadow:var(--shadow)}'+
+      '.dd .dd-btn:hover{border-color:var(--primary)}'+
+      '.dd .dd-caret{flex:none;font-size:11px;opacity:.7;transition:transform .15s ease}'+
+      '.dd.open .dd-btn .dd-caret{transform:rotate(180deg)}'+
+      '.dd .dd-menu{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:70;background:var(--elev);border:2px solid var(--tx);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:none}'+
+      '.dd.open .dd-menu{display:block;animation:ddIn .15s ease}'+
+      '@keyframes ddIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}'+
+      '.dd .dd-opt{padding:11px 14px;cursor:pointer;transition:background .12s}'+
+      '.dd .dd-opt:hover{background:var(--line)}'+
+      '.dd .dd-opt.sel{background:var(--line);color:var(--primary);font-weight:700}'+
+      '[data-theme="dark"] .dd .dd-menu{background:#262B36}'+
+      '[data-theme="dark"] .dd .dd-opt:hover{background:#303848}';
+    document.head.appendChild(s);
+  }catch(e){} }
+  function enhanceSelects(root){
+    root=root||document;
+    var sels=root.querySelectorAll('select.inp');
+    for(var i=0;i<sels.length;i++){ (function(sel){
+      if(sel.dataset && sel.dataset.dd) return;
+      sel.dataset.dd='1';
+      var wrap=document.createElement('div'); wrap.className='dd';
+      var btn=document.createElement('button'); btn.type='button'; btn.className='dd-btn';
+      var lbl=document.createElement('span'); lbl.className='dd-label';
+      var caret=document.createElement('span'); caret.className='dd-caret'; caret.textContent='▼';
+      btn.appendChild(lbl); btn.appendChild(caret);
+      var menu=document.createElement('div'); menu.className='dd-menu';
+      function syncLabel(){ lbl.textContent = sel.options.item(sel.selectedIndex) ? sel.options.item(sel.selectedIndex).text : ''; }
+      function buildMenu(){
+        menu.innerHTML='';
+        for(var j=0;j<sel.options.length;j++){ (function(opt,k){
+          var d=document.createElement('div'); d.className='dd-opt'+(opt.selected?' sel':'');
+          d.textContent=opt.text;
+          d.addEventListener('click',function(){
+            sel.selectedIndex=k; syncLabel();
+            try{ sel.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
+            wrap.classList.remove('open');
+          });
+          menu.appendChild(d);
+        })(sel.options[j],j); }
+      }
+      btn.addEventListener('click',function(e){ e.stopPropagation(); buildMenu(); wrap.classList.toggle('open'); });
+      document.addEventListener('click',function(e){ if(!wrap.contains(e.target)) wrap.classList.remove('open'); });
+      sel.style.display='none';
+      sel.parentNode.insertBefore(wrap, sel.nextSibling);
+      wrap.appendChild(btn); wrap.appendChild(menu); wrap.appendChild(sel);
+      syncLabel();
+    })(sels[i]); }
+  }
+  function go(){ injectDdStyle(); enhanceSelects(document); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();
 if(document.readyState === 'loading'){
   document.addEventListener('DOMContentLoaded', function(){
     try{ var s=sessionStorage.getItem('dash_scroll'); var v=sessionStorage.getItem('dash_view');
@@ -100097,6 +100399,13 @@ let TXDATA = [];
 
 let TXMONTH = TXBULAN;
 try{ var __rb = new URL(location.href).searchParams.get('bulan') || TXBULAN; sessionStorage.setItem('dash_rendered', __rb); }catch(e){}
+// Refresh: balik ke bulan berjalan, kecuali bulan itu memang baru dipilih user (navigasi) di sesi ini.
+try{
+  var _now = new Date(), _cur = _now.getFullYear() + '-' + String(_now.getMonth() + 1).padStart(2, '0');
+  var _keep = null; try{ _keep = sessionStorage.getItem('dash_keep'); }catch(e){}
+  var _u = new URL(location.href), _q = _u.searchParams.get('bulan');
+  if(_q && _q !== _cur && _q !== _keep){ _u.searchParams.delete('bulan'); location.replace(_u.toString()); }
+}catch(e){}
 
 
 
@@ -101390,6 +101699,7 @@ function txMonth(delta){
 
   TXMONTH = d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0');
   try{ sessionStorage.setItem('dash_bulan', TXMONTH); }catch(e){}
+  try{ sessionStorage.setItem('dash_keep', TXMONTH); }catch(e){}
   try{ var u=new URL(location.href); u.searchParams.set('bulan', TXMONTH); history.replaceState(null,'',u.toString()); }catch(e){}
 
 

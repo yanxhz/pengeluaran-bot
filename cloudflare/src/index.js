@@ -1,4 +1,4 @@
-import { handleDashboard, handleCheckLogin, handleLogout, handleWebRegister, handleWebLogin, handleWebDemo, handleAddTx, handleDeleteTx, handleUpdateTx, handleSetBudget, handleGetTxAll, handleExportCsv, handleBackup, handleRenameKategori, handleDeleteAll, handleSetKategoriTipe } from './dashboard.js';
+import { handleDashboard, handleCheckLogin, handleLogout, handleWebRegister, handleWebLogin, handleWebDemo, handleAddTx, handleDeleteTx, handleUpdateTx, handleSetBudget, handleGetTxAll, handleExportCsv, handleExportXlsx, handleBackup, handleRenameKategori, handleDeleteAll, handleSetKategoriTipe } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -17,7 +17,7 @@ export default {
         return handleGetTxAll(request, env);
       }
       if (url.pathname === '/api/csv') {
-        return handleExportCsv(request, env);
+        return handleExportXlsx(request, env);
       }
       if (url.pathname === '/api/backup') {
         return handleBackup(request, env);
@@ -61,7 +61,7 @@ export default {
       return handleGetTxAll(request, env);
     }
     if (url.pathname === '/api/csv') {
-      return handleExportCsv(request, env);
+      return handleExportXlsx(request, env);
     }
     if (request.method !== 'POST' || url.pathname !== '/webhook') {
       return new Response('not found', { status: 404 });
