@@ -96112,7 +96112,7 @@ async function doTx(){
 
 
 
-    if(r.status === 200){ var t=document.getElementById('txin'); if(t) t.value=''; showToast('✓ Tersimpan'); try{ loadTxAll(); }catch(e){} try{ refreshDash(); }catch(e){} }
+    if(r.status === 200){ var t=document.getElementById('txin'); if(t) t.value=''; showToast('✓ Tersimpan'); try{ await loadTxAll(); }catch(e){ showToast('⚠ Reload daftar gagal, refresh halaman.'); } try{ await refreshDash(); }catch(e){ showToast('⚠ Reload dashboard gagal, refresh halaman.'); } }
 
 
 
@@ -99037,7 +99037,7 @@ async function saveEdit(){
 
 
 
-    if(r.status === 200){ closeEdit(); showToast('✓ Perubahan tersimpan'); try{ loadTxAll(); }catch(e){} refreshDash(); }
+    if(r.status === 200){ closeEdit(); showToast('✓ Perubahan tersimpan'); try{ await loadTxAll(); }catch(e){ showToast('⚠ Reload daftar gagal, refresh halaman.'); } try{ await refreshDash(); }catch(e){ showToast('⚠ Reload dashboard gagal, refresh halaman.'); } }
 
 
 
@@ -99853,7 +99853,7 @@ async function delTx(id){
 
 
 
-    if(r.status === 200){ showToast('✓ Transaksi dihapus'); try{ loadTxAll(); }catch(e){} refreshDash(); }
+    if(r.status === 200){ showToast('✓ Transaksi dihapus'); try{ await loadTxAll(); }catch(e){ showToast('⚠ Reload daftar gagal, refresh halaman.'); } try{ await refreshDash(); }catch(e){ showToast('⚠ Reload dashboard gagal, refresh halaman.'); } }
 
 
 
