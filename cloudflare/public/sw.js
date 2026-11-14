@@ -26,9 +26,20 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
-  // API & auth: selalu network (jangan cache data pribadi)
+  const isJson = url.pathname === '/dashboard' && url.searchParams.get('json') === '1';
   if (url.pathname.startsWith('/api/')) return;
   if (url.pathname === '/logout') return;
+  if (isJson) {
+    // Dashboard JSON: selalu network (jangan cache data baru/refresh) — cegah stale data setelah edit/hapus/tambah.
+    e.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put('/dashboard', copy));
+        return res;
+      }).catch(() => caches.match('/dashboard'))
+    );
+    return;
+  }
 
   if (req.mode === 'navigate') {
     e.respondWith(

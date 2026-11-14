@@ -23314,7 +23314,7 @@ const jsonErr = (st, e) => new Response(JSON.stringify({ ok: false, err: e }), {
 
 
 
-const jsonOk = (obj = {}) => new Response(JSON.stringify({ ok: true, ...obj }), { headers: { 'content-type': 'application/json' } });
+const jsonOk = (obj = {}) => new Response(JSON.stringify({ ok: true, ...obj }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
 
 
